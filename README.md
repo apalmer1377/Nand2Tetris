@@ -7,4 +7,6 @@ As I work through each chapter, I will update my progress below, and mention whi
 
 Chapter 1: projects/01/*.hdl, all files passed tests
 
-Chapter 2: projects/02/*.hll, all files passed tests
+Chapter 2: projects/02/*.hdl, all files passed tests
+
+Chapter 3: projects/03/*.hdl, all files passed tests
