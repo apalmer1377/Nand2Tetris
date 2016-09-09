@@ -10,3 +10,5 @@ Chapter 1: projects/01/*.hdl, all files passed tests
 Chapter 2: projects/02/*.hdl, all files passed tests
 
 Chapter 3: projects/03/*.hdl, all files passed tests
+
+Chapter 4: projects/04/*.asm, Mult.asm passed test, working on Fill.asm
