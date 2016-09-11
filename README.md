@@ -14,3 +14,7 @@ Chapter 3: projects/03/*.hdl, all files passed tests
 Chapter 4: projects/04/*.asm, all files passed tests
 
 Chapter 5: projects/05/*.hdl, all files passed tests
+
+Chapter 6: projects/06/*.hack,assembler.scala, Assembler written in Scala passed all tests
+
+
