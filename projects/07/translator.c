@@ -10,14 +10,6 @@ void parsefile(char*,char*);
 void parseline(char*,char*);
 int get_next_word(char*,char*,int*);
 void parsearith(char*,char*);
-void parsearg(int,char*);
-void parselocal(int,char*);
-void parsestatic(int,char*);
-void parseconstant(int,char*);
-void parsethis(int,char*);
-void parsethat(int,char*);
-void parsepointer(int,char*);
-void parsetemp(int,char*);
 void parsepush(char*,char*,char*);
 
 int main(int argc, char** argv) {
