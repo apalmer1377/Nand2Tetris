@@ -1,0 +1,13 @@
+@SP
+M=7
+A=A+1
+@SP
+M=8
+A=A+1
+@SP
+D=M
+A=A-1
+M=M+D
+(END)
+@END
+0;JMP
