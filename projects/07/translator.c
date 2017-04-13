@@ -12,6 +12,7 @@ void parseline(char*,char*,int*);
 int get_next_word(char*,char*,int*);
 void parsearith(char*,char*,int*);
 void parsepush(char*,char*,char*);
+void parsepop(char*,char*,char*);
 char *ident(char*,int*);
 
 int main(int argc, char** argv) {
@@ -32,6 +33,7 @@ int main(int argc, char** argv) {
     } else {
         parsefile(argv[1],OUT);
     }
+    printf("done\n");
     strcat(OUT,"(END)\n@END\n0;JMP");
     OUT[strlen(OUT)] = '\0';
     FILE *fwrite = fopen(argv[2],"w");
@@ -53,7 +55,6 @@ void parsefile(char* rfile,char* out) {
     char str[100];
     int jj[1];
     jj[0] = 0;
-    printf("%i\n",jj[0]);
     int i;
     while (fgets(str,100,rf) != NULL) {
         parseline(str,out,jj);
@@ -64,10 +65,10 @@ void parseline(char* line, char* out,int* jj) {
     if ((line[0] == '/' && line[1] == '/') || line[0] == '\n' || line[0] == ' ' || line[0] == '\0' || line[0] <= 13) {
         return;
     }
+    printf("%s",line);
     int i[0];
     *i = 0;
     jj[0] += 1;
-    printf("%i\n",*jj);
     char *temp = (char*) malloc((strlen(line)+1)*sizeof(char));
     get_next_word(line,temp,i);
     char *command = (char*) malloc((strlen(temp)+1)*sizeof(char));
@@ -82,6 +83,8 @@ void parseline(char* line, char* out,int* jj) {
         char *index = temp;
         if (strcmp(command,"push") == 0)
             parsepush(segment,index,out);
+        else
+            parsepop(segment,index,out);
 
         free(segment);
     }
@@ -184,16 +187,90 @@ void parsearith(char *oper, char *out,int* jumpc) {
 
 void parsepush(char *segment, char *index,char *out) {
     char *str = (char*) malloc(100*sizeof(char));
-    if (strcmp(segment,"constant") == 0) {
-        strcat(str,"@");
+    str[0] = '\0';
+    strcat(str,"@");
+    strcat(str,index);
+    strcat(str,"\nD=A\n");
+    if (strcmp(segment,"static") == 0) {
+        strcat(str,"@STATIC");
         strcat(str,index);
         strcat(str,"\n");
-        strcat(str,"D=A\n");
-        strcat(str,"@SP\n");
-        strcat(str,"A=M\nM=D\n");
-        strcat(str,"@SP\nM=M+1\n");
+        strcat(str,"D=M\n");
+    } else if (strcmp(segment,"constant") == 0) {
+        //strcat(str,"@SP\nA=M\nM=D\n@SP\nM=M+1\n");
+    } else if (strcmp(segment,"pointer") == 0) {
+        if (*index == '0')
+            strcat(str,"@THIS");
+        else
+            strcat(str,"@THAT");
+        strcat(str,"\nD=M\n");
+    } else {
+        if (strcmp(segment,"temp") == 0) {
+            strcat(str,"@5");
+        } else { 
+            
+            if (strcmp(segment,"local") == 0) {
+                strcat(str,"@LCL");
+            } else if (strcmp(segment,"argument") == 0) {
+                strcat(str,"@ARG");
+            } else if (strcmp(segment,"this") == 0) {
+                strcat(str,"@THIS"); 
+            } else if (strcmp(segment,"that") == 0) {
+                strcat(str,"@THAT"); 
+            }
+            strcat(str,"\nA=M");
+        }
+        strcat(str,"\nA=A+D\nD=M\n");
+    }
+
+    strcat(str,"@SP\nA=M\nM=D\n@SP\nM=M+1\n");
+    strcat(out,str);
+    free(str);
+}
+
+void parsepop(char *segment, char *index,char *out) {
+    char *str = (char*) malloc(100*sizeof(char));
+    str[0] = '\0';
+    
+    if (strcmp(segment,"static") == 0) {
+        strcat(str,"@SP\nM=M-1\nA=M\nD=M\n");
+        strcat(str,"@STATIC");
+        strcat(str,index);
+        strcat(str,"\nM=D\n");
+    } else if (strcmp(segment,"pointer") == 0) {
+        strcat(str,"@SP\nM=M-1\nA=M\nD=M\n");
+        if (*index == '0')
+            strcat(str,"@THIS");
+        else
+            strcat(str,"@THAT");
+        strcat(str,("\nM=D\n")); 
+    } else {
+
+        strcat(str,"@");
+        strcat(str,index);
+        strcat(str,"\nD=A\n@i\nM=D\n");
+
+        if (strcmp(segment,"temp") == 0) {
+            strcat(str,"@5\nD=A");
+        } else {
+   
+            if (strcmp(segment,"local") == 0) {
+                strcat(str,"@LCL");
+            } else if (strcmp(segment,"argument") == 0) {
+                strcat(str,"@ARG");
+            } else if (strcmp(segment,"this") == 0) {
+                strcat(str,"@THIS"); 
+            } else if (strcmp(segment,"that") == 0) {
+                strcat(str,"@THAT"); 
+            }
+
+            strcat(str,"\nD=M");
+        }
+
+        strcat(str,"\n@i\nM=M+D\n@SP\nM=M-1\nA=M\nD=M\n@i\nA=M\nM=D\n");
     }
     strcat(out,str);
+
     free(str);
 }
 
