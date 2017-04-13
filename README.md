@@ -17,4 +17,7 @@ Chapter 5: projects/05/*.hdl, all files passed tests
 
 Chapter 6: projects/06/*.hack,assembler.scala, Assembler written in Scala passed all tests
 
+Chapter 7: projects/07/*.asm, translator.c, Partial VMTranslator written in C passed stage 1 and stage 2tests 
+    **Might revisit this as memory allocation and general code quality is not great
+
 
