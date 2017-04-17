@@ -6,22 +6,45 @@
 #include <string.h>
 #include <unistd.h>
 
+struct funcdef {
+    char *name;
+    int locals;
+} funcdef;
+
 char *get_filename_ext(char*);
-void parsefile(char*,char*,int*);
-void parseline(char*,char*,int*,char*);
+void parsefile(char*,char*,int*, struct funcdef *);
+void parseline(char*,char*,char*,int*,char*, struct funcdef *);
 int get_next_word(char*,char*,int*);
 void parsearith(char*,char*,int*);
-void parsepush(char*,char*,char*);
-void parsepop(char*,char*,char*);
+void parsepush(char*,char*,char*,char*);
+void parsepop(char*,char*,char*,char*);
 char *ident(char*,int*);
 void popargs(char*,char*);
+char *get_short_fname(char*);
 
 int main(int argc, char** argv) {
 
     struct dirent *rfile;
     DIR *argdir;
     char *OUT = (char*) malloc(10000*sizeof(char));
+    struct funcdef *funcs = (struct funcdef *) malloc(20 *  sizeof(struct funcdef));
+    int i;
+    for (i=0;i<20;i++) {
+        funcs[i] = (struct funcdef) {"NULL",-1};
+    }
     //strcat(OUT,"@261\nD=A\n@SP\nM=D\n@300\nD=A\n@LCL\nM=D\n@400\nD=A\n@ARG\nM=D\n");
+    strcat(OUT,"@256\nD=A\n@SP\nM=D\n");
+    strcat(OUT,"@INIT");
+    strcat(OUT,"\nD=A\n@SP\nA=M\nM=D\n@SP\nM=M+1\n");
+    strcat(OUT,"@LCL\nD=M\n@SP\nA=M\nM=D\n@SP\nM=M+1\n");
+    strcat(OUT,"@ARG\nD=M\n@SP\nA=M\nM=D\n@SP\nM=M+1\n");
+    strcat(OUT,"@THIS\nD=M\n@SP\nA=M\nM=D\n@SP\nM=M+1\n");
+    strcat(OUT,"@THAT\nD=M\n@SP\nA=M\nM=D\n@SP\nM=M+1\n");
+    strcat(OUT,"@5\nD=A\n");
+    strcat(OUT,"@SP\nD=M-D\n@ARG\nM=D\n");
+    strcat(OUT,"@SP\nD=M\n");
+    strcat(OUT,"@LCL\nM=D\n@Sys.init\n");
+    strcat(OUT,"0;JMP\n(INIT)\n");
 
     char *ext = get_filename_ext(argv[1]);
     int jj[2];
@@ -39,14 +62,14 @@ int main(int argc, char** argv) {
             printf("%s\n",ext);
             if (strcmp(ext,"vm") == 0) { 
                 strcat(ffname,rfile->d_name);
-                parsefile(ffname,OUT,jj);
+                parsefile(ffname,OUT,jj,funcs);
             }
             strcpy(ffname,dname);
         }
         free(dname);
         free(ffname);
     } else {
-        parsefile(argv[1],OUT,jj);
+        parsefile(argv[1],OUT,jj,funcs);
     }
     printf("done\n");
     strcat(OUT,"(END)\n@END\n0;JMP");
@@ -66,19 +89,25 @@ char *get_filename_ext(char *filename) {
     return dot + 1;
 }
 
-void parsefile(char* rfile,char* out,int *jj) {
+char *get_short_fname(char *filename) {
+    char *dot = strrchr(filename, '/');
+    if (!dot || dot == filename) return filename;
+    return dot + 1;
+}
+
+void parsefile(char* rfile,char* out,int *jj, struct funcdef *funcs) {
     printf("%s\n",rfile);
     FILE *rf = fopen(rfile,"r");
     char str[100];
     char *func = (char*) malloc(25*sizeof(char));
     printf("here\n");
     while (fgets(str,100,rf) != NULL) {
-        parseline(str,out,jj,func);
+        parseline(get_short_fname(rfile),str,out,jj,func,funcs);
     }
     free(func);
 }
 
-void parseline(char* line, char* out,int* jj,char* func) {
+void parseline(char *filen, char* line, char* out,int* jj,char* func, struct funcdef *funcs) {
     if ((line[0] == '/' && line[1] == '/') || line[0] == '\n' || line[0] == ' ' || line[0] == '\0' || line[0] <= 13) {
         return;
     }
@@ -97,9 +126,9 @@ void parseline(char* line, char* out,int* jj,char* func) {
         get_next_word(line,temp,i);
         char *index = temp;
         if (strcmp(command,"push") == 0)
-            parsepush(segment,index,out);
+            parsepush(filen,segment,index,out);
         else
-            parsepop(segment,index,out);
+            parsepop(filen,segment,index,out);
 
         free(segment);
     } else if (strcmp(command,"function") == 0) {
@@ -109,6 +138,11 @@ void parseline(char* line, char* out,int* jj,char* func) {
         strcat(out,"(");
         strcat(out,func);
         strcat(out,")\n");
+        get_next_word(line,temp,i);
+        int i;
+        for (i=0;i<atoi(temp);i++) {
+            strcat(out,"@SP\nA=M\nM=0\n@SP\nM=M+1\n");
+        }
     } else if (strcmp(command,"call") == 0) {
         jj[1] += 1;
         char *cident = (char*) malloc(4);
@@ -124,28 +158,34 @@ void parseline(char* line, char* out,int* jj,char* func) {
         strcat(out,"@ARG\nD=M\n@SP\nA=M\nM=D\n@SP\nM=M+1\n");
         strcat(out,"@THIS\nD=M\n@SP\nA=M\nM=D\n@SP\nM=M+1\n");
         strcat(out,"@THAT\nD=M\n@SP\nA=M\nM=D\n@SP\nM=M+1\n");
-        strcat(out,"@SP\nA=M\n");
-        int i;
-        for (i=0;i<10;i++) {
-            strcat(out,"M=0\nA=A+1\n");
-        }
-        strcat(out,"D=A\n@SP\nM=D\n");
-        strcat(out,"@10\nD=D-A\n@LCL\nM=D\n@");
+        strcat(out,"@5\nD=A\n@");
         strcat(out,temp);
-        strcat(out,"\nD=A\n@15\nD=A+D\n@SP\nD=M-D\n@ARG\nM=D\n@");
+        strcat(out,"\nD=A+D\n@SP\nD=M-D\n@ARG\nM=D\n");
+        strcat(out,"@SP\nD=M\n");
+        strcat(out,"@LCL\nM=D\n@");
         strcat(out,na);
         strcat(out,"\n0;JMP\n(RARG");
         strcat(out,cident);
-        strcat(out,")\n@");
-        strcat(out,temp);
-        strcat(out,"\nD=A\n@4\nD=A+D\n@ARG\nD=M+D\n@SP\nM=D\nA=D\nD=M\n@THAT\nM=D\n@SP\nM=M-1\nA=M\nD=M\n@THIS\nM=D\n@SP\nM=M-1\nA=M\nD=M\n@ARG\nM=D\n@SP\nM=M-1\nA=M\nD=M\n@LCL\nM=D\n@SP\nM=M-1\n");
+        strcat(out,")\n");
 
         free(cident);
         free(na);
     } else if (strcmp(command,"return") == 0) {
-        strcat(out,"@5\nD=A\n@LCL\nA=M-D\nD=M\n@rett\nM=D\n");
+        strcat(out,"@5\nD=A\n@LCL\nA=M-D\nD=M\n@reta\nM=D\n");
+        strcat(out,"@5\nD=A\n@LCL\nD=M-D\n@rett\nM=D\n");
         strcat(out,"@SP\nA=M-1\nD=M\n@ARG\nA=M\nM=D\n");
-        strcat(out,"@rett\nA=M\n0;JMP\n");
+        strcat(out,"@ARG\nD=M+1\n@SP\nM=D\n");
+
+        strcat(out,"@rett\nM=M+1\nA=M\nD=M\n");
+        strcat(out,"@LCL\nM=D\n");
+        strcat(out,"@rett\nM=M+1\nA=M\nD=M\n");
+        strcat(out,"@ARG\nM=D\n");
+        strcat(out,"@rett\nM=M+1\nA=M\nD=M\n");
+        strcat(out,"@THIS\nM=D\n");
+        strcat(out,"@rett\nM=M+1\nA=M\nD=M\n");
+        strcat(out,"@THAT\nM=D\n");
+        strcat(out,"@reta\nA=M\n0;JMP\n");
+
     } else if (strcmp(command,"label") == 0) {
         get_next_word(line,temp,i);
         strcat(out,"(");
@@ -265,14 +305,15 @@ void parsearith(char *oper, char *out,int* jumpc) {
     free(str);
 }
 
-void parsepush(char *segment, char *index,char *out) {
+void parsepush(char *filen, char *segment, char *index,char *out) {
     char *str = (char*) malloc(100*sizeof(char));
     str[0] = '\0';
     strcat(str,"@");
     strcat(str,index);
     strcat(str,"\nD=A\n");
     if (strcmp(segment,"static") == 0) {
-        strcat(str,"@STATIC");
+        strcat(str,"@");
+        strcat(str,filen);
         strcat(str,index);
         strcat(str,"\n");
         strcat(str,"D=M\n");
@@ -308,13 +349,14 @@ void parsepush(char *segment, char *index,char *out) {
     free(str);
 }
 
-void parsepop(char *segment, char *index,char *out) {
+void parsepop(char *filen, char *segment, char *index,char *out) {
     char *str = (char*) malloc(100*sizeof(char));
     str[0] = '\0';
     
     if (strcmp(segment,"static") == 0) {
         strcat(str,"@SP\nM=M-1\nA=M\nD=M\n");
-        strcat(str,"@STATIC");
+        strcat(str,"@");
+        strcat(str,filen);
         strcat(str,index);
         strcat(str,"\nM=D\n");
     } else if (strcmp(segment,"pointer") == 0) {
@@ -377,4 +419,3 @@ char * ident(char* buff,int *i) {
     }
     buff[3] = '\0';
 }
-

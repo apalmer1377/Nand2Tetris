@@ -1,3 +1,15 @@
+@261
+D=A
+@SP
+M=D
+@300
+D=A
+@LCL
+M=D
+@400
+D=A
+@ARG
+M=D
 @1
 D=A
 @ARG
