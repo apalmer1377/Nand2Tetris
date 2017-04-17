@@ -112,33 +112,42 @@ void parseline(char* line, char* out,int* jj,char* func) {
         get_next_word(line,temp,i);
     } else if (strcmp(command,"call") == 0) {
         jj[1] += 1;
-        char *cident = (char*) malloc(4*sizeof(char));
+        char *cident = (char*) malloc(4);
         char *na = (char*) malloc(10);
-        printf("%i\n",jj[1]);
-        sleep(1);
         ident(cident,jj+1);
         get_next_word(line,temp,i);
         strcpy(na,temp);
         get_next_word(line,temp,i);
-        popargs(temp,out);
-        strcat(out,"@FCONT");
+        strcat(out,"@RARG");
         strcat(out,cident);
-        strcat(out,"\nD=A\n@RET");
-        strcat(out,cident);
-        strcat(out,"\nM=D\n@");
+        strcat(out,"\nD=A\n@SP\nA=M\nM=D\n@SP\nM=M+1\n");
+        strcat(out,"@LCL\nD=M\n@SP\nA=M\nM=D\n@SP\nM=M+1\n");
+        strcat(out,"@ARG\nD=M\n@SP\nA=M\nM=D\n@SP\nM=M+1\n");
+        strcat(out,"@THIS\nD=M\n@SP\nA=M\nM=D\n@SP\nM=M+1\n");
+        strcat(out,"@THAT\nD=M\n@SP\nA=M\nM=D\n@SP\nM=M+1\n");
+        strcat(out,"@SP\nA=M\n");
+        int i;
+        for (i=0;i<10;i++) {
+            strcat(out,"M=0\nA=A+1\n");
+        }
+        strcat(out,"D=A\n@SP\nM=D\n");
+        strcat(out,"@10\nD=D-A\n@LCL\nM=D\n@");
+        strcat(out,temp);
+        strcat(out,"\nD=A\n@15\nD=A+D\n@SP\nD=M-D\n@ARG\nM=D\n@");
         strcat(out,na);
-        strcat(out,"\n0;JMP\n(");
-        strcat(out,"FCONT");
+        strcat(out,"\n0;JMP\n(RARG");
         strcat(out,cident);
-        strcat(out,")\n");
+        strcat(out,")\n@");
+        strcat(out,temp);
+        strcat(out,"\nD=A\n@4\nD=A+D\n@ARG\nD=M+D\n@SP\nM=D\nA=D\nD=M\n@THAT\nM=D\n@SP\nM=M-1\nA=M\nD=M\n@THIS\nM=D\n@SP\nM=M-1\nA=M\nD=M\n@ARG\nM=D\n@SP\nM=M-1\nA=M\nD=M\n@LCL\nM=D\n");
+
         free(cident);
+        free(na);
     } else if (strcmp(command,"return") == 0) {
-        char *ccident = (char*) malloc(4);
-        ident(ccident,jj+1);
-        strcat(out,"@RET");
-        strcat(out,ccident); 
-        strcat(out,"\nA=M\n0;JMP\n");
-        free(ccident);
+        strcat(out,"@5\nD=A\n@LCL\nD=M-D\n@reta\nM=D\n");
+        strcat(out,"@5\nD=A\n@LCL\nA=M-D\nD=M\n@rett\nM=D\n");
+        strcat(out,"@SP\nA=M-1\nD=M\n@reta\nA=M\nM=D\n");
+        strcat(out,"@rett\nA=M\n0;JMP\n");
     } else if (strcmp(command,"label") == 0) {
         get_next_word(line,temp,i);
         strcat(out,"(");
@@ -370,3 +379,4 @@ char * ident(char* buff,int *i) {
     }
     buff[3] = '\0';
 }
+
