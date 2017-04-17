@@ -21,7 +21,7 @@ int main(int argc, char** argv) {
     struct dirent *rfile;
     DIR *argdir;
     char *OUT = (char*) malloc(10000*sizeof(char));
-    strcat(OUT,"@261\nD=A\n@SP\nM=D\n@300\nD=A\n@LCL\nM=D\n@400\nD=A\n@ARG\nM=D\n");
+    //strcat(OUT,"@261\nD=A\n@SP\nM=D\n@300\nD=A\n@LCL\nM=D\n@400\nD=A\n@ARG\nM=D\n");
 
     char *ext = get_filename_ext(argv[1]);
     int jj[2];
@@ -109,7 +109,6 @@ void parseline(char* line, char* out,int* jj,char* func) {
         strcat(out,"(");
         strcat(out,func);
         strcat(out,")\n");
-        get_next_word(line,temp,i);
     } else if (strcmp(command,"call") == 0) {
         jj[1] += 1;
         char *cident = (char*) malloc(4);
@@ -139,14 +138,13 @@ void parseline(char* line, char* out,int* jj,char* func) {
         strcat(out,cident);
         strcat(out,")\n@");
         strcat(out,temp);
-        strcat(out,"\nD=A\n@4\nD=A+D\n@ARG\nD=M+D\n@SP\nM=D\nA=D\nD=M\n@THAT\nM=D\n@SP\nM=M-1\nA=M\nD=M\n@THIS\nM=D\n@SP\nM=M-1\nA=M\nD=M\n@ARG\nM=D\n@SP\nM=M-1\nA=M\nD=M\n@LCL\nM=D\n");
+        strcat(out,"\nD=A\n@4\nD=A+D\n@ARG\nD=M+D\n@SP\nM=D\nA=D\nD=M\n@THAT\nM=D\n@SP\nM=M-1\nA=M\nD=M\n@THIS\nM=D\n@SP\nM=M-1\nA=M\nD=M\n@ARG\nM=D\n@SP\nM=M-1\nA=M\nD=M\n@LCL\nM=D\n@SP\nM=M-1\n");
 
         free(cident);
         free(na);
     } else if (strcmp(command,"return") == 0) {
-        strcat(out,"@5\nD=A\n@LCL\nD=M-D\n@reta\nM=D\n");
         strcat(out,"@5\nD=A\n@LCL\nA=M-D\nD=M\n@rett\nM=D\n");
-        strcat(out,"@SP\nA=M-1\nD=M\n@reta\nA=M\nM=D\n");
+        strcat(out,"@SP\nA=M-1\nD=M\n@ARG\nA=M\nM=D\n");
         strcat(out,"@rett\nA=M\n0;JMP\n");
     } else if (strcmp(command,"label") == 0) {
         get_next_word(line,temp,i);
