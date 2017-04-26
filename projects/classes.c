@@ -50,21 +50,10 @@ void parseClass(FILE *f, char * token) {
     if (stemp != NULL)
         newClass->subs = stemp[0];
     
-    struct var * head = newClass->vars;
-    while (head != NULL) {
-        printf("%s %s %s\n",head->vtype,head->type,head->name);
-        head = head->next;
-    }
-
-    struct subDec * sub = newClass->subs;
-    while (sub != NULL) {
-        printf("%s %s %s\n",sub->type,sub->varType,sub->name);
-        sub = sub->next;
-    }
+    printClass(newClass);
 
     free(temp);
     free(stemp);
-    free(head);
 
     return;
 }
@@ -114,6 +103,7 @@ void parseVar(FILE * f, char * token, char * vvtype, char * ttype, struct var **
 
 void parseSub(FILE * f,char * token, struct subDec ** sub) {
     initSub(f,token,sub);
+    printf("%s %s %s\n",(*sub)->type,(*sub)->varType,(*sub)->name);
     struct var ** params = (struct var **) malloc(sizeof(struct var **));
     int i = 0;
     while (token[0] != ')') {
@@ -131,7 +121,8 @@ void parseSub(FILE * f,char * token, struct subDec ** sub) {
     i = 0;
     int j = 0;
     struct var ** vars = (struct var **) malloc(sizeof(struct var **));
-    struct command ** s = (struct command **) malloc(sizeof(struct command **));
+    struct command ** s = (struct command **) malloc(10*sizeof(struct command *));
+    printf("%i\n",sizeof(s));
     while (token[0] != '}') {
         if (strcmp(token,"var") == 0) {
 
@@ -141,18 +132,20 @@ void parseSub(FILE * f,char * token, struct subDec ** sub) {
         }
 
         parseCommand(f,token,s+j);
-        if (j > 0)
+        printCommand(s[0]);
+        printf("%i\n",j);
+        if (j > 0) {
             s[j-1]->next = s[j];
+        } 
 
         j++;
 
     }
 
-    struct var * h = vars[0];
-    while (h != NULL) {
-        printf("WHEEE %s %s %s\n",h->vtype,h->type,h->name);
-        h = h->next;
-    }
+    printCommand(s[2]);
+
+    (*sub)->decs = *vars;
+    (*sub)->comm = *s;
 
 }
 
@@ -174,6 +167,9 @@ void initSub(FILE *f, char * token, struct subDec ** sub) {
     (*sub)->varType = vtype;
     (*sub)->name = fname;
     (*sub)->paramList = NULL;
+    (*sub)->decs = NULL;
+    (*sub)->comm = NULL;
+    (*sub)->next = NULL;
 
     parseToken(f,token);
     parseToken(f,token);

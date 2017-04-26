@@ -1,7 +1,6 @@
 #include "parser.h"
 
 void parseCommand(FILE *f, char * token, struct command ** s) {
-    printf("COMMMMM %s\n",token);
     *s = (struct command *) malloc(sizeof(struct command *));
     (*s)->next = NULL;
 
@@ -27,11 +26,11 @@ void parseCommand(FILE *f, char * token, struct command ** s) {
         parseReturn(f,token,(*s)->state);
     }
 
+    //printCommand(*s);
     parseToken(f,token);
 }
 
 void parseLet(FILE *f, char * token, struct letStatement * state) {
-    //struct letStatement * state = (struct letStatement *) malloc(sizeof(struct letStatement *));
     state->to = NULL;
 
     parseToken(f,token);
@@ -41,21 +40,20 @@ void parseLet(FILE *f, char * token, struct letStatement * state) {
 
     struct expression ** to = (struct expression **) malloc(sizeof(struct expression *));
     struct expression ** fro = (struct expression **) malloc(sizeof(struct expression *));
-    char c = parseToken(f,token);
+    parseToken(f,token);
     if ( token[0]  == '[') {
+        parseToken(f,token);
         parseExpression(f,to,token,']');
         parseToken(f,token);
         state->to = *to;
     }
 
+    parseToken(f,token);
     parseExpression(f,fro, token,';');
     state->fro = *fro;
-
-    printLet(state);
 }
 
 void parseWhile(FILE *f, char * token, struct whileStatement * state) {
-    //struct whileStatement * state = (struct whileStatement *) malloc(sizeof(struct whileStatement *));
     parseToken(f,token);
 
     struct expression ** exp = (struct expression **) malloc(sizeof(struct expression));
@@ -78,8 +76,6 @@ void parseWhile(FILE *f, char * token, struct whileStatement * state) {
 
     if (comms != NULL)
         state->commands = comms[0];
-
-    parseToken(f,token);
 }
 
 void parseIf(FILE *f, char * token, struct ifStatement * state) {
@@ -131,12 +127,11 @@ void parseIf(FILE *f, char * token, struct ifStatement * state) {
 
 void parseDo(FILE *f, char * token, struct doStatement * state) {
     state->sub = (struct term *) malloc(sizeof(struct term *));
+    parseToken(f,token);
     parseTerm(f,token,state->sub);
-    printDo(state);
 }
 
 void parseReturn(FILE *f, char * token, struct returnStatement * state) {
-    printf("return\n");
     int o = SEEK_CUR;
     parseToken(f,token);
     if (token[0] == ';') {

@@ -80,9 +80,49 @@ void printLet(struct letStatement * state) {
     printf("\n");
 }
 
+void printIf(struct ifStatement * state) {
+    printf("if (");
+    printExpression(state->cond);
+    printf(") {\n");
+    struct command * temp = state->head;
+    while (temp != NULL) {
+        printCommand(temp);
+        temp = temp->next;
+    } 
+    printf("}");
+    if (state->elseHead != NULL) {
+        printf(" else {\n");
+        temp = state->elseHead;
+        while (temp != NULL) {
+            printCommand(temp);
+            temp = temp->next;
+        }
+    }
+    printf("}\n");
+}
+
+void printWhile(struct whileStatement * state) {
+    printf("while (");
+    printExpression(state->cond);
+    printf(") {\n");
+    struct command * temp = state->commands;
+    while (temp != NULL) {
+        printCommand(temp);
+        temp = temp->next;
+    }
+    printf("}\n");
+}
+
 void printDo(struct doStatement * state) {
     printf("do ");
     printTerm(state->sub);
+    printf("\n");
+}
+
+void printReturn(struct returnStatement * state) {
+    printf("return ");
+    if (state->ret != NULL)
+        printExpression(state->ret);
     printf("\n");
 }
 
@@ -113,7 +153,8 @@ void printTerm(struct term * t) {
             printf(t->value);
         case EXP:
             printf("(");
-            printExpression(*(t->exValue));
+            if (t->exValue != NULL)
+                printExpression(*(t->exValue));
             printf(")");
             break;
         case VAR:
@@ -127,3 +168,75 @@ void printTerm(struct term * t) {
     }
 }
 
+void printCommand(struct command * c) {
+    switch(c->type) {
+        case LET:
+            printLet(c->state);
+            break;
+        case IF:
+            printIf(c->state);
+            break;
+        case WHILE:
+            printWhile(c->state);
+            break;
+        case DO:
+            printDo(c->state);
+            break;
+        case RETURN:
+            printReturn(c->state);
+            break;
+    }
+}
+
+void printClass(struct classDec * class) {
+    printf("class %s {\n",class->name);
+    
+    struct var * temp = class->vars;
+    while (temp != NULL) {
+        printParam(temp);
+        temp = temp->next;
+    }
+
+    struct subDec * sub = class->subs;
+    while (sub != NULL) {
+        printSub(sub);
+        sub = sub->next;
+    }
+    printf("}\n");
+
+}
+
+void printSub(struct subDec * sub) {
+    printf("%s %s %s(",sub->type,sub->varType,sub->name);
+
+    struct var * temp = sub->paramList;
+    if (temp != NULL) {
+        printVar(temp);
+        temp = temp->next;
+        while (temp != NULL) {
+            printf(", ");
+            printVar(temp);
+            temp = temp->next;
+        }
+    }
+    printf(") {\n");
+    free(temp);
+
+    struct command * comm = sub->comm;
+    while (comm != NULL) {
+        printCommand(comm);
+        comm = comm->next;
+    }
+    free(comm);
+
+}
+
+void printVar(struct var *v) {
+    printf("%s ",v->vtype);
+    printParam(v);
+    printf("\n");
+}
+
+void printParam(struct var * v) {
+    printf("%s %s",v->type,v->name);
+}

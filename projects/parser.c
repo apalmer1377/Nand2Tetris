@@ -27,11 +27,6 @@ void parseFile(char *file) {
             parseClass(f,token);
             continue;  
         }
-        if (strcmp(token,"while") == 0) {
-            //parseWhile(f,token);
-            continue;
-        }
-
         printf("%s\n",token); 
 
     }
@@ -47,9 +42,8 @@ void parseExpression(FILE* f, struct expression **exp, char* token, char end) {
     
     char c;
     int j = 0;
-    while ((c = parseToken(f,token)) != EOF) {
-        if (token[0] == end)
-            break; 
+    //while ((c = parseToken(f,token)) != EOF) {
+    while (token[0] != end) {
         if (end == ',' && token[0] == ')')
             break;
 
@@ -62,13 +56,11 @@ void parseExpression(FILE* f, struct expression **exp, char* token, char end) {
     (*exp)->t = t;
     (*exp)->op = ot;
 
-    printExpression(*exp);
-
     return;
 }
 
 void parseTerm(FILE* f,char * token, struct term * t) {
-    char c = parseToken(f,token);
+    //char c = parseToken(f,token);
     char * temp = (char*) malloc(strlen(token)+1);
     int i = atoi(token);
 
@@ -81,6 +73,7 @@ void parseTerm(FILE* f,char * token, struct term * t) {
     if (token[0] == '(') {
         t->type = EXP;
         struct expression **texp = (struct expression **) malloc(sizeof(struct expression *));
+        parseToken(f,token);
         parseExpression(f,texp,token,')');
         t->exValue = texp;
         return;
@@ -97,22 +90,28 @@ void parseTerm(FILE* f,char * token, struct term * t) {
         t->value = temp;
     }    
 
-    //char c = token[0];
+    parseToken(f,token);
+    char c = token[0];
     if (c == '[' || c == '(') {
         parseToken(f,token);
         struct expression **texp = (struct expression **) malloc(sizeof(struct expression *));
-        if ( c == '[')
+        if ( c == '['){
             parseExpression(f,texp,token,']');
-        else {
+            i = 1;
+        }else {
             t->type = SUB;
             i = 0;
-            //parseToken(f,token);
             while (token[0] != ')') {       
                 parseExpression(f,texp+i,token,',');
                 i++; 
             }
         }
-        t->exValue = texp;
+        if ( i > 0) 
+            t->exValue = texp;
+        else
+            t->exValue = NULL;
+        parseToken(f,token);
+        
     }
 
 }
@@ -133,7 +132,7 @@ void parseOpTerm(FILE* f,char * token, struct opterm ** op,int i) {
     op[i] = (struct opterm *) malloc(sizeof(struct opterm *));
     op[i]->oper = token[0]; 
     struct term* t = (struct term *) malloc(sizeof(struct term *));
-    //parseToken(f,token);
+    parseToken(f,token);
     parseTerm(f,token,t);
     op[i]->t = t;
 }

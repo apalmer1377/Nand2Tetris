@@ -115,6 +115,7 @@ struct subDec {
     char * varType;
     char * name;
     struct var * paramList;
+    struct var * decs;
     struct command * comm;
     struct subDec * next;
 } subDec;
@@ -155,7 +156,13 @@ void parseCommand(FILE*,char*,struct command **);
 void parseIf(FILE*,char*,struct ifStatement *);
 void parseDo(FILE*,char*,struct doStatement *);
 void parseReturn(FILE*,char*,struct returnStatement *);
-
+void printWhile(struct whileStatement*);
+void printIf(struct ifStatement*);
+void printCommand(struct command *);
 void printDo(struct doStatement*);
+void printVar(struct var *);
+void printSub(struct subDec *);
+void printClass(struct classDec*);
+void printParam(struct var *);
 
 #endif
