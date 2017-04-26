@@ -1,5 +1,44 @@
 #include "parser.h"
 
+char parseToken(FILE * f, char * arr) {
+    char c;
+    int i = 0;
+    while ((c = getc(f)) != EOF) {
+        if (c == ' ' || c == '\n' || c == '\t' || c == '\r') {
+            if (i == 0)
+                continue;
+            break;
+        }
+        if (isInArray(c,OPS) || isInArray(c,SYMBOLS)) {
+            if (i == 0) {
+                arr[i++] = c;
+                if (c == '/') {
+                    c = getc(f);
+                    if (c == '/') {
+                        skipLine(f);
+                        return parseToken(f,arr);
+                    }
+                    if (c == '*') {
+                        c = getc(f);
+                        if (c == '*') {
+                            skipComment(f,arr);
+                            return parseToken(f,arr);
+                        }
+                        fseek(f,-1,SEEK_CUR);
+                    }
+                    fseek(f,-1,SEEK_CUR);
+                    c = '/';
+                }
+            } else
+                fseek(f,-1,SEEK_CUR);
+            break;
+        }
+        arr[i++] = c;
+    }
+    arr[i] = '\0';
+    return c;
+}
+
 int isInArray(char c,char * arr) {
     int i;
     for (i=0; i < strlen(arr);i++) {
@@ -13,17 +52,20 @@ void skipLine(FILE * f) {
     char c;
     while ((c = getc(f)) != EOF) {
         if (c == '\n' || c == '\r')
-           return; 
+           break; 
     }
 }
 
 void skipComment(FILE * f, char * temp) {
     char c;
-    while ((c = parseToken(f,temp)) != EOF) {
-        if (strcmp(temp,"*/") == 0)
-           return; 
+    while ((c = getc(f)) != EOF) {
+        if (c == '*') {
+            c = getc(f);
+            if (c == '/')
+                break;
+            fseek(f,-1,SEEK_CUR);
+        }
     }
-    return;
 }
 
 void printLet(struct letStatement * state) {
@@ -35,6 +77,12 @@ void printLet(struct letStatement * state) {
     } 
     printf(" = ");
     printExpression(state->fro);
+    printf("\n");
+}
+
+void printDo(struct doStatement * state) {
+    printf("do ");
+    printTerm(state->sub);
     printf("\n");
 }
 
@@ -77,6 +125,5 @@ void printTerm(struct term * t) {
             }
             break;
     }
-   
 }
 

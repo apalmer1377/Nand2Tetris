@@ -1,7 +1,9 @@
 #include "parser.h"
 
 int main(int argc, char **argv) {
-    parseFile("10/ArrayTest/Main.jack");
+    char * fname = argv[1];
+    printf("%s\n",fname);
+    parseFile(fname);
     return 0;
 }
 
@@ -16,14 +18,6 @@ void parseFile(char *file) {
     void * fin = NULL;
     char c;
     while ((c = parseToken(f , token)) != EOF) {
-        if (strcmp(token,"//") == 0) {
-            skipLine(f);
-            continue;
-        }
-        if (strcmp(token,"/**") == 0) {
-            skipComment(f,token);
-            continue;
-        } 
         if (strcmp(token,"let") == 0) {
             ptr = (struct letStatement *) realloc(ptr,sizeof(struct letStatement *));
             parseLet(f,token,ptr);
@@ -42,27 +36,6 @@ void parseFile(char *file) {
 
     }
     return;
-}
-
-char parseToken(FILE * f, char * arr) {
-    char c;
-    int i = 0;
-    while ((c = getc(f)) != EOF) {
-        if (c == ' ' || c == '\n' || c == '\t' || c == '\r') {
-            if (i == 0)
-                continue;
-            break;
-        } else if (c == '(' || c == ')' || c == '{' || c == '}' || c == '[' || c == ']' || c == ';' || c == '"' || c == ',' || c == '=') {
-            if (i == 0) 
-                arr[i++] = c;
-            else
-                fseek(f,-1,SEEK_CUR);
-            break;
-        }
-        arr[i++] = c;
-    }
-    arr[i] = '\0';
-    return c;
 }
 
 void parseExpression(FILE* f, struct expression **exp, char* token, char end) {
@@ -88,6 +61,8 @@ void parseExpression(FILE* f, struct expression **exp, char* token, char end) {
 
     (*exp)->t = t;
     (*exp)->op = ot;
+
+    printExpression(*exp);
 
     return;
 }
@@ -122,6 +97,7 @@ void parseTerm(FILE* f,char * token, struct term * t) {
         t->value = temp;
     }    
 
+    //char c = token[0];
     if (c == '[' || c == '(') {
         parseToken(f,token);
         struct expression **texp = (struct expression **) malloc(sizeof(struct expression *));
@@ -129,10 +105,9 @@ void parseTerm(FILE* f,char * token, struct term * t) {
             parseExpression(f,texp,token,']');
         else {
             t->type = SUB;
-            parseExpression(f,texp,token,',');
-            i = 1;
+            i = 0;
+            //parseToken(f,token);
             while (token[0] != ')') {       
-                texp = (struct expression **) realloc(texp,sizeof(texp) + sizeof(struct expression *));
                 parseExpression(f,texp+i,token,',');
                 i++; 
             }
@@ -158,34 +133,7 @@ void parseOpTerm(FILE* f,char * token, struct opterm ** op,int i) {
     op[i] = (struct opterm *) malloc(sizeof(struct opterm *));
     op[i]->oper = token[0]; 
     struct term* t = (struct term *) malloc(sizeof(struct term *));
-    //op[i]->t = (struct term *) malloc(sizeof(struct term *));
+    //parseToken(f,token);
     parseTerm(f,token,t);
     op[i]->t = t;
 }
-
-void parseClass(FILE *f, char * token) {
-    struct classDec * newClass = (struct classDec *) malloc(sizeof(struct classDec *));
-    parseToken(f,token);
-    char * className = (char *) malloc(strlen(token) + 1); 
-    strcpy(className,token);
-
-    newClass->name = className;
-    newClass->vars = NULL;
-    newClass->subs = NULL;
-    char c;
-    c= parseToken(f,token);
-    if (c != '{')
-        printf("error\n");
-
-    int i = 0;
-    while ((c = parseToken(f,token)) != '}') {
-        if (strcmp(token,"static") == 0 || strcmp(token,"field") == 0) {
-            newClass->vars = (struct classVar **) realloc(newClass->vars,sizeof(newClass->vars) + sizeof(struct classVar *));
-        } 
-    }
-
-    return;
-}
-
-
-

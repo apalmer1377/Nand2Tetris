@@ -6,9 +6,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #define MAX_LEN 256
 #define OPS "+-*/&|<>="
+#define SYMBOLS "(){}[];,"
+#define CLASS_VAR_SIZE sizeof(struct classVar *)
+#define VAR_SIZE sizeof(struct var *)
+#define SUB_SIZE sizeof(struct subDec *)
+#define COMM_SIZE sizeof(struct command *)
 
 enum op {
     PLUS,
@@ -54,14 +60,11 @@ enum termType {
 };
 
 struct var {
+    char * vtype;
     char * type;
     char * name;
+    struct var * next;
 } var;
-
-struct varDec {
-    struct var * variable;
-    struct varDec *next;
-} varDec;
 
 struct term {
     enum termType type;
@@ -79,6 +82,7 @@ struct expression {
 struct command {
     enum commandType type;
     void * state;
+    struct command * next;
 } command;
 
 struct letStatement {
@@ -88,18 +92,18 @@ struct letStatement {
 } letStatement;
 
 struct ifStatement {
-    struct expression * ifExpression;
-    struct command ** head;
-    struct command ** elseHead;
+    struct expression * cond;
+    struct command * head;
+    struct command * elseHead;
 } ifStatement;
 
 struct whileStatement {
     struct expression * cond;
-    struct command ** commands;
+    struct command * commands;
 } whileStatement;
 
 struct doStatement {
-    struct subDec * sub;
+    struct term * sub;
 } doStatement;
 
 struct returnStatement {
@@ -107,27 +111,19 @@ struct returnStatement {
 } returnStatement;
 
 struct subDec {
-    enum sub type;
+    char * type;
     char * varType;
     char * name;
     struct var * paramList;
+    struct command * comm;
+    struct subDec * next;
 } subDec;
 
 struct classDec {
     char *name;
-    struct classVar ** vars;
-    struct subroutineDec ** subs;
+    struct var * vars;
+    struct subDec * subs;
 } classDec;
-
-struct classVar {
-    enum classVarType ctype;
-    char * type;
-    char * name;
-} classVar;
-
-struct subroutineDec {
-
-} subroutineDec;
 
 struct opterm {
     char oper;
@@ -149,6 +145,17 @@ void parseString(FILE*,char*);
 void printLet(struct letStatement*);
 void printExpression(struct expression*);
 void printTerm(struct term*);
-void parseWhile(FILE*,char*);
+void parseWhile(FILE*,char*,struct whileStatement*);
+int parseVars(FILE*,char*,struct var**,int);
+void parseVar(FILE*,char*,char*,char*,struct var**);
+void parseSub(FILE*,char*,struct subDec**);
+void initSub(FILE*,char*,struct subDec**);
+void parseParam(FILE*,char*,struct var **);
+void parseCommand(FILE*,char*,struct command **);
+void parseIf(FILE*,char*,struct ifStatement *);
+void parseDo(FILE*,char*,struct doStatement *);
+void parseReturn(FILE*,char*,struct returnStatement *);
+
+void printDo(struct doStatement*);
 
 #endif
