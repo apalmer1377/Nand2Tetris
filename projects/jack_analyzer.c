@@ -7,6 +7,7 @@ int main(int argc, char **argv) {
     char * fname = argv[1];
 
     char * ext = get_filename_ext(argv[1]);
+    char * tokens = (char *) malloc(INT_MAX);
     char * xml = (char *) malloc(INT_MAX);
     if (strlen(ext) == 0) {
         argdir = opendir(argv[1]);
@@ -14,10 +15,11 @@ int main(int argc, char **argv) {
         strcpy(fullname,argv[1]);
         while ((rfile = readdir(argdir)) != NULL) {
             if (strcmp(get_filename_ext(rfile->d_name),"jack") == 0) {
+                tokens[0] = '\0';
                 xml[0] = '\0';
                 strcat(fullname,rfile->d_name);
                 printf("%s\n",fullname);
-                parseFile(fullname,xml);
+                parseFile(fullname,tokens,xml);
             }
             strcpy(fullname,argv[1]);
         }
@@ -25,11 +27,11 @@ int main(int argc, char **argv) {
     }
 
     printf("%s\n",fname);
-    parseFile(fname,xml);
+    parseFile(fname,tokens,xml);
     return 0;
 }
 
-void parseFile(char *file, char * xml) {
+void parseFile(char *file, char * tokens, char * xml) {
     FILE * f = fopen(file,"r");
     if (f == NULL)
         exit(1);
@@ -55,15 +57,19 @@ void parseFile(char *file, char * xml) {
     struct classDec * temp = newClass[0];
     while (temp != NULL) {
         printClass(temp);
+        tokenizeClass(tokens,temp);
         outputClass(xml,temp);
         temp = temp->next;
     }
 
     char * out = strip_extension(file);
     char * tout = (char *) malloc(strlen(out) + 6);
+    char * xout = (char *) malloc(strlen(out) + 5);
     strcpy(tout,out);
+    strcpy(xout,out);
     strcat(tout,"T.xml");
-    printf("%s\n",tout);
+    strcat(xout,".xml");
+    printf("%s\n",xout);
 
     FILE * w = fopen(tout,"w+");
     if (w == NULL) {
@@ -71,8 +77,15 @@ void parseFile(char *file, char * xml) {
         exit(1);
     }
 
-    fputs(xml,w);
+    fputs(tokens,w);
     fclose(w);
+
+    FILE * x = fopen(xout,"w+");
+    if (x == NULL)
+        exit(1);
+
+    fputs(xml,x);
+    fclose(x);
 
     return;
 }

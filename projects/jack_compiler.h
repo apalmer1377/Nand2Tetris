@@ -127,7 +127,7 @@ struct opterm {
 } opterm;
 
 
-void parseFile(char*,char*);
+void parseFile(char*,char*,char*);
 char parseToken(FILE*,char*);
 void skipLine(FILE*);
 void skipComment(FILE*,char*);
@@ -161,6 +161,35 @@ void printClass(struct classDec*);
 void printParam(struct var *);
 void printReturn(struct returnStatement *);
 
+void tokenizeClass(char*,struct classDec*);
+void tokenizeSub(char*,struct subDec*);
+void tokenizeVar(char*,struct var*);
+void tokenizeParam(char*,struct var*);
+void tokenizeCommand(char*,struct command*);
+void tokenizeLet(char*,struct letStatement*);
+void tokenizeIf(char*,struct ifStatement*);
+void tokenizeWhile(char*,struct whileStatement*);
+void tokenizeDo(char*,struct doStatement*);
+void tokenizeReturn(char*,struct returnStatement*);
+void tokenizeExpression(char*,struct expression *);
+void tokenizeTerm(char*,struct term *);
+void tokenizeType(char*,char*);
+void tokenizeSymbol(char*,char*);
+void tokenizeOpTerm(char*,struct opterm *);
+void tokenizeInt(char*,int);
+void tokenizeString(char*,char*);
+void tokenizeSubCall(char*,char*);
+
+char * itoa(int);
+void reverse(char*);
+
+int isKeyword(char *);
+int isKeywordConstant(char*);
+
+char * get_filename_ext(char*);
+char * get_short_name(char*);
+char * strip_extension(char*);
+
 void outputClass(char*,struct classDec*);
 void outputSub(char*,struct subDec*);
 void outputVar(char*,struct var*);
@@ -180,14 +209,5 @@ void outputInt(char*,int);
 void outputString(char*,char*);
 void outputSubCall(char*,char*);
 
-char * itoa(int);
-void reverse(char*);
-
-int isKeyword(char *);
-int isKeywordConstant(char*);
-
-char * get_filename_ext(char*);
-char * get_short_name(char*);
-char * strip_extension(char*);
 
 #endif

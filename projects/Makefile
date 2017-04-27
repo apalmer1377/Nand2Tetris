@@ -1,6 +1,6 @@
-FILES := jack_compiler.c xml_formatter.c class.c sub.c command.c expression.c util.c jack_compiler.h
+FILES := jack_analyzer.c tokenizer.c xml_compiler.c class.c sub.c command.c expression.c util.c jack_compiler.h
 CC := GCC
 
 run: $(FILES)
-	cc -o jack_compiler $(FILES)
+	cc -o jack_analyzer $(FILES)
 
