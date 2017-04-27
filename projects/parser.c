@@ -27,7 +27,6 @@ void parseFile(char *file) {
             parseClass(f,token);
             continue;  
         }
-        printf("%s\n",token); 
 
     }
     return;
@@ -39,10 +38,10 @@ void parseExpression(FILE* f, struct expression **exp, char* token, char end) {
     (*exp) = (struct expression *) malloc(sizeof(struct expression *));
 
     parseTerm(f,token,t);
-    
+
     char c;
     int j = 0;
-    //while ((c = parseToken(f,token)) != EOF) {
+    
     while (token[0] != end) {
         if (end == ',' && token[0] == ')')
             break;
@@ -66,9 +65,16 @@ void parseTerm(FILE* f,char * token, struct term * t) {
 
     t->type = INT;
     t->value = NULL;
-    t->isInt = 1;
     t->intValue = i;
     t->exValue = NULL;
+
+    if (token[0] == '-' || token[0] == '~') {
+        t->unaryOp = token[0];
+        parseToken(f,token);
+        parseTerm(f,token,t);
+
+        return;
+    }
 
     if (token[0] == '(') {
         t->type = EXP;
@@ -80,7 +86,6 @@ void parseTerm(FILE* f,char * token, struct term * t) {
     }
 
     if (i == 0 && strcmp(token,"0") != 0){
-        t->isInt = 0;
         t->type = VAR;
         if (token[0] == '"') {
             t->type = STRING;
@@ -131,8 +136,9 @@ void parseString(FILE * f, char * token) {
 void parseOpTerm(FILE* f,char * token, struct opterm ** op,int i) {
     op[i] = (struct opterm *) malloc(sizeof(struct opterm *));
     op[i]->oper = token[0]; 
-    struct term* t = (struct term *) malloc(sizeof(struct term *));
+    op[i]->t = (struct term *) malloc(sizeof(struct term *));
     parseToken(f,token);
-    parseTerm(f,token,t);
-    op[i]->t = t;
+    parseTerm(f,token,op[i]->t);
+    //if (token[0] == ')')
+    //    parseToken(f,token);
 }

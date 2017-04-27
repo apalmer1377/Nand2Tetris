@@ -28,7 +28,7 @@ enum op {
     EQ
 };
 
-enum sub {
+enum subType {
     CONSTRUCTOR,
     FUNCTION,
     METHOD
@@ -69,8 +69,8 @@ struct var {
 struct term {
     enum termType type;
     char * value;
-    int isInt;
     int intValue;
+    char unaryOp;
     struct expression ** exValue;
 } term;
 
@@ -111,7 +111,8 @@ struct returnStatement {
 } returnStatement;
 
 struct subDec {
-    char * type;
+    enum subType type;
+    //char * type;
     char * varType;
     char * name;
     struct var * paramList;

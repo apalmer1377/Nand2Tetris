@@ -18,8 +18,8 @@ void parseClass(FILE *f, char * token) {
     int i = 0,j = 0;
     char * vtype = NULL;
     char * type = NULL;
-    struct var ** temp = (struct var **) malloc(sizeof(struct var **));
-    struct subDec ** stemp = (struct subDec **) malloc(sizeof(struct subDec **));
+    struct var ** temp = (struct var **) malloc(10*sizeof(struct var *));
+    struct subDec ** stemp = (struct subDec **) malloc(10*sizeof(struct subDec *));
     parseToken(f,token);
     while (token[0] != '}') {
         if (strcmp(token,"static") == 0 || strcmp(token,"field") == 0) {
@@ -33,12 +33,14 @@ void parseClass(FILE *f, char * token) {
 
         if (strcmp(token,"constructor") == 0 || strcmp(token,"function") == 0 || strcmp(token,"method") == 0) {
 
-            while (token[0] != '}') {
-                parseSub(f,token,stemp+j);
-                if (j > 0)
-                    stemp[j-1]->next = stemp[j];
-                j++;
-            }
+            parseSub(f,token,stemp+j);
+            if (j > 0)
+                stemp[j-1]->next = stemp[j];
+            j++;
+
+            parseToken(f,token);
+
+            printSub(stemp[j-1]);
 
             continue;
         }
@@ -103,8 +105,7 @@ void parseVar(FILE * f, char * token, char * vvtype, char * ttype, struct var **
 
 void parseSub(FILE * f,char * token, struct subDec ** sub) {
     initSub(f,token,sub);
-    printf("%s %s %s\n",(*sub)->type,(*sub)->varType,(*sub)->name);
-    struct var ** params = (struct var **) malloc(sizeof(struct var **));
+    struct var ** params = (struct var **) malloc(MAX_LEN*sizeof(struct var *));
     int i = 0;
     while (token[0] != ')') {
         parseParam(f,token,params + i);
@@ -120,9 +121,8 @@ void parseSub(FILE * f,char * token, struct subDec ** sub) {
 
     i = 0;
     int j = 0;
-    struct var ** vars = (struct var **) malloc(sizeof(struct var **));
-    struct command ** s = (struct command **) malloc(10*sizeof(struct command *));
-    printf("%i\n",sizeof(s));
+    struct var ** vars = (struct var **) malloc(MAX_LEN*sizeof(struct var *));
+    struct command ** s = (struct command **) malloc(MAX_LEN*sizeof(struct command *));
     while (token[0] != '}') {
         if (strcmp(token,"var") == 0) {
 
@@ -132,40 +132,40 @@ void parseSub(FILE * f,char * token, struct subDec ** sub) {
         }
 
         parseCommand(f,token,s+j);
-        printCommand(s[0]);
-        printf("%i\n",j);
+        printCommand(s[j]);
         if (j > 0) {
             s[j-1]->next = s[j];
         } 
-
         j++;
 
     }
 
-    printCommand(s[2]);
-
     (*sub)->decs = *vars;
     (*sub)->comm = *s;
-
 }
 
 void initSub(FILE *f, char * token, struct subDec ** sub) {
-    *sub = (struct subDec *) malloc(SUB_SIZE);
+    (*sub) = (struct subDec *) malloc(SUB_SIZE);
 
-    char * ftype = (char *) malloc(strlen(token) + 1);
-    strcpy(ftype,token);
+    (*sub)->type = FUNCTION;
+    if (strcmp(token,"function") == 0)
+        (*sub)->type = FUNCTION;
+    if (strcmp(token,"constructor") == 0)
+        (*sub)->type = CONSTRUCTOR;
+    if (strcmp(token,"method") == 0)
+        (*sub)->type = METHOD;
+
+    char * throwaway = (char *) malloc(strlen(token) + 1);
+    strcpy(throwaway,token);
+    parseToken(f,token);
+
+    (*sub)->varType = (char *) malloc(strlen(token) + 1);
+    strcpy((*sub)->varType,token);
 
     parseToken(f,token);
-    char * vtype = (char *) malloc(strlen(token) + 1);
-    strcpy(vtype,token);
+    (*sub)->name = (char *) malloc(strlen(token) + 1);
+    strcpy((*sub)->name,token);
 
-    parseToken(f,token);
-    char * fname = (char *) malloc(strlen(token) + 1);
-    strcpy(fname,token);
-
-    (*sub)->type = ftype;
-    (*sub)->varType = vtype;
-    (*sub)->name = fname;
     (*sub)->paramList = NULL;
     (*sub)->decs = NULL;
     (*sub)->comm = NULL;

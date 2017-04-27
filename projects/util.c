@@ -36,6 +36,7 @@ char parseToken(FILE * f, char * arr) {
         arr[i++] = c;
     }
     arr[i] = '\0';
+    //printf("%s\n",arr);
     return c;
 }
 
@@ -127,6 +128,7 @@ void printReturn(struct returnStatement * state) {
 }
 
 void printExpression(struct expression * exp) {
+    //printf("%s\n",exp->t->value);
     printTerm(exp->t);
 
     if (exp->op != NULL) {
@@ -140,9 +142,11 @@ void printExpression(struct expression * exp) {
 }
 
 void printTerm(struct term * t) {
+    if (t->unaryOp)
+        printf("%c",t->unaryOp);
     switch(t->type) {
         case INT:
-            printf("%i ",t->intValue);
+            printf("%i",t->intValue);
             break;
         case STRING:
             printf("\"");
@@ -193,7 +197,7 @@ void printClass(struct classDec * class) {
     
     struct var * temp = class->vars;
     while (temp != NULL) {
-        printParam(temp);
+        printVar(temp);
         temp = temp->next;
     }
 
@@ -207,7 +211,18 @@ void printClass(struct classDec * class) {
 }
 
 void printSub(struct subDec * sub) {
-    printf("%s %s %s(",sub->type,sub->varType,sub->name);
+    switch(sub->type) {
+        case CONSTRUCTOR:
+            printf("constructor");
+            break;
+        case FUNCTION:
+            printf("function");
+            break;
+        case METHOD:
+            printf("method");
+            break;
+    }
+    printf(" %s %s(",sub->varType,sub->name);
 
     struct var * temp = sub->paramList;
     if (temp != NULL) {
@@ -227,6 +242,7 @@ void printSub(struct subDec * sub) {
         printCommand(comm);
         comm = comm->next;
     }
+    printf("}\n");
     free(comm);
 
 }
