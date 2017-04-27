@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #define MAX_LEN 256
 #define OPS "+-*/&|<>="
@@ -15,18 +16,6 @@
 #define VAR_SIZE sizeof(struct var *)
 #define SUB_SIZE sizeof(struct subDec *)
 #define COMM_SIZE sizeof(struct command *)
-
-enum op {
-    PLUS,
-    MINUS,
-    TIMES,
-    DIVIDE,
-    AND,
-    OR,
-    LT,
-    GT,
-    EQ
-};
 
 enum subType {
     CONSTRUCTOR,
@@ -112,7 +101,6 @@ struct returnStatement {
 
 struct subDec {
     enum subType type;
-    //char * type;
     char * varType;
     char * name;
     struct var * paramList;
@@ -125,6 +113,7 @@ struct classDec {
     char *name;
     struct var * vars;
     struct subDec * subs;
+    struct classDec * next;
 } classDec;
 
 struct opterm {
@@ -137,7 +126,7 @@ void parseFile(char*);
 char parseToken(FILE*,char*);
 void skipLine(FILE*);
 void skipComment(FILE*,char*);
-void parseClass(FILE*,char*);
+void parseClass(FILE*,char*,struct classDec **);
 void parseLet(FILE*,char*,struct letStatement *);
 void parseExpression(FILE*,struct expression**,char*,char);
 void parseTerm(FILE*,char*,struct term*);
@@ -165,5 +154,30 @@ void printVar(struct var *);
 void printSub(struct subDec *);
 void printClass(struct classDec*);
 void printParam(struct var *);
+void printReturn(struct returnStatement *);
+
+void outputClass(char*,struct classDec*);
+void outputSub(char*,struct subDec*);
+void outputVar(char*,struct var*);
+void outputParam(char*,struct var*);
+void outputCommand(char*,struct command*);
+void outputLet(char*,struct letStatement*);
+void outputIf(char*,struct ifStatement*);
+void outputWhile(char*,struct whileStatement*);
+void outputDo(char*,struct doStatement*);
+void outputReturn(char*,struct returnStatement*);
+void outputExpression(char*,struct expression *);
+void outputTerm(char*,struct term *);
+void outputType(char*,char*);
+void outputSymbol(char*,char*);
+void outputOpTerm(char*,struct opterm *);
+void outputInt(char*,int);
+void outputString(char*,char*);
+void outputSubCall(char*,char*);
+
+char * itoa(int);
+void reverse(char*);
+
+int isKeyword(char *);
 
 #endif

@@ -1,36 +1,4 @@
-#include "parser.h"
-
-int main(int argc, char **argv) {
-    char * fname = argv[1];
-    printf("%s\n",fname);
-    parseFile(fname);
-    return 0;
-}
-
-void parseFile(char *file) {
-    FILE * f = fopen(file,"r");
-    if (f == NULL)
-        exit(1);
-
-    char * token = malloc(MAX_LEN);
-    char * temp = token;
-    void * ptr = NULL;
-    void * fin = NULL;
-    char c;
-    while ((c = parseToken(f , token)) != EOF) {
-        if (strcmp(token,"let") == 0) {
-            ptr = (struct letStatement *) realloc(ptr,sizeof(struct letStatement *));
-            parseLet(f,token,ptr);
-            continue;
-        } 
-        if (strcmp(token,"class") == 0) {
-            parseClass(f,token);
-            continue;  
-        }
-
-    }
-    return;
-}
+#include "jack_compiler.h"
 
 void parseExpression(FILE* f, struct expression **exp, char* token, char end) {
     struct term * t = (struct term *) malloc(sizeof(struct term *));
@@ -82,6 +50,7 @@ void parseTerm(FILE* f,char * token, struct term * t) {
         parseToken(f,token);
         parseExpression(f,texp,token,')');
         t->exValue = texp;
+        parseToken(f,token);
         return;
     }
 

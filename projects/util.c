@@ -1,4 +1,4 @@
-#include "parser.h"
+#include "jack_compiler.h"
 
 char parseToken(FILE * f, char * arr) {
     char c;
@@ -226,16 +226,24 @@ void printSub(struct subDec * sub) {
 
     struct var * temp = sub->paramList;
     if (temp != NULL) {
-        printVar(temp);
+        printParam(temp);
         temp = temp->next;
         while (temp != NULL) {
             printf(", ");
-            printVar(temp);
+            printParam(temp);
             temp = temp->next;
         }
     }
     printf(") {\n");
+
+    temp = sub->decs;
+    while (temp != NULL) {
+        printVar(temp);
+        temp = temp->next;
+    }
+
     free(temp);
+
 
     struct command * comm = sub->comm;
     while (comm != NULL) {
@@ -255,4 +263,39 @@ void printVar(struct var *v) {
 
 void printParam(struct var * v) {
     printf("%s %s",v->type,v->name);
+}
+
+int isKeyword(char * word) {
+    char * keywords[] = {"class","contructor","function","method","field","static","var","int","char","boolean","void","true","false","null","this","let","do","if","else","while","return"};
+    int i;
+    for (i=0;i<21;i++) {
+        if (strcmp(word,keywords[i]) == 0)
+            return 1;
+    }
+    return 0;
+}
+
+char * itoa(int i) {
+    char * a = (char *) malloc(11);
+    int j = i;
+    int k = 0;
+    while (j != 0) {
+        a[k++] = (j % 10) + '0';
+        j = j / 10;
+    }
+    reverse(a);
+    return a;
+}
+
+void reverse(char * s)
+{
+    int length = strlen(s) ;
+    int c, i, j;
+
+    for (i = 0, j = length - 1; i < j; i++, j--)
+    {
+        c = s[i];
+        s[i] = s[j];
+        s[j] = c;
+    }
 }

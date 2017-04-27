@@ -1,10 +1,10 @@
-#include "parser.h"
+#include "jack_compiler.h"
 
 void parseCommand(FILE *f, char * token, struct command ** s) {
     *s = (struct command *) malloc(sizeof(struct command *));
     (*s)->next = NULL;
 
-    printf("%s\n",token);
+    //printf("%s\n",token);
 
     if (strcmp(token,"let") == 0) {
         (*s)->type = LET;
@@ -59,12 +59,9 @@ void parseLet(FILE *f, char * token, struct letStatement * state) {
 void parseWhile(FILE *f, char * token, struct whileStatement * state) {
     parseToken(f,token);
     parseToken(f,token);
-    printf("%s\n",token);
 
     struct expression ** exp = (struct expression **) malloc(sizeof(struct expression));
     parseExpression(f,exp,token,')');
-    printf("here\n");
-    printExpression(*exp);
 
     parseToken(f,token);
     parseToken(f,token);
@@ -86,6 +83,7 @@ void parseWhile(FILE *f, char * token, struct whileStatement * state) {
 }
 
 void parseIf(FILE *f, char * token, struct ifStatement * state) {
+    parseToken(f,token);
     parseToken(f,token);
 
     struct expression ** exp = (struct expression **) malloc(sizeof(struct expression *));
