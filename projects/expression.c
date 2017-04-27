@@ -4,6 +4,7 @@ void parseExpression(FILE* f, struct expression **exp, char* token, char end) {
     struct term * t = (struct term *) malloc(sizeof(struct term *));
     struct opterm ** ot = (struct opterm **) malloc(10*sizeof(struct opterm *));
     (*exp) = (struct expression *) malloc(sizeof(struct expression *));
+    (*exp)->next = NULL;
 
     parseTerm(f,token,t);
 
@@ -72,11 +73,16 @@ void parseTerm(FILE* f,char * token, struct term * t) {
         if ( c == '['){
             parseExpression(f,texp,token,']');
             i = 1;
-        }else {
+        } else {
+            texp = (struct expression **) realloc(texp,10*sizeof(struct expression *));
             t->type = SUB;
             i = 0;
             while (token[0] != ')') {       
+                if (token[0] == ',')
+                    parseToken(f,token);
                 parseExpression(f,texp+i,token,',');
+                if (i > 0)
+                    texp[i-1]->next = texp[i];
                 i++; 
             }
         }
@@ -98,6 +104,7 @@ void parseString(FILE * f, char * token) {
             break;
         token[i++] = c;
     }
+    printf("\n");
     token[i] = '\0';
     return;
 }

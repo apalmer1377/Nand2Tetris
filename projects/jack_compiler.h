@@ -8,10 +8,14 @@
 #include <string.h>
 #include <unistd.h>
 #include <limits.h>
+#include <dirent.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
 
 #define MAX_LEN 256
-#define OPS "+-*/&|<>="
-#define SYMBOLS "(){}[];,"
+#define OPS "+-*/&|<>=~"
+#define SYMBOLS "(){}[];,\""
 #define CLASS_VAR_SIZE sizeof(struct classVar *)
 #define VAR_SIZE sizeof(struct var *)
 #define SUB_SIZE sizeof(struct subDec *)
@@ -66,6 +70,7 @@ struct term {
 struct expression {
     struct term * t;
     struct opterm ** op;
+    struct expression * next;
 } expression;
 
 struct command {
@@ -122,7 +127,7 @@ struct opterm {
 } opterm;
 
 
-void parseFile(char*);
+void parseFile(char*,char*);
 char parseToken(FILE*,char*);
 void skipLine(FILE*);
 void skipComment(FILE*,char*);
@@ -179,5 +184,10 @@ char * itoa(int);
 void reverse(char*);
 
 int isKeyword(char *);
+int isKeywordConstant(char*);
+
+char * get_filename_ext(char*);
+char * get_short_name(char*);
+char * strip_extension(char*);
 
 #endif

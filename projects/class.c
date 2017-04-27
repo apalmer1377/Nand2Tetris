@@ -19,7 +19,7 @@ void parseClass(FILE *f, char * token, struct classDec ** newClass) {
     char * vtype = NULL;
     char * type = NULL;
     struct var ** temp = (struct var **) malloc(10*sizeof(struct var *));
-    struct subDec ** stemp = (struct subDec **) malloc(10*sizeof(struct subDec *));
+    struct subDec ** stemp = (struct subDec **) malloc(16*sizeof(struct subDec *));
     parseToken(f,token);
     while (token[0] != '}') {
         if (strcmp(token,"static") == 0 || strcmp(token,"field") == 0) {
@@ -52,14 +52,8 @@ void parseClass(FILE *f, char * token, struct classDec ** newClass) {
     if (stemp != NULL)
         (*newClass)->subs = stemp[0];
 
-    //printClass((*newClass));
-    //char * xml = (char *) malloc(INT_MAX);
-    //outputClass(buff,(*newClass));
-
-    //printf("%s\n",buff);
-
-    free(temp);
-    free(stemp);
+    //free(temp);
+    //free(stemp);
 
     return;
 }

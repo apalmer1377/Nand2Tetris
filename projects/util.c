@@ -90,9 +90,8 @@ void printIf(struct ifStatement * state) {
         printCommand(temp);
         temp = temp->next;
     } 
-    printf("}");
     if (state->elseHead != NULL) {
-        printf(" else {\n");
+        printf("} else {\n");
         temp = state->elseHead;
         while (temp != NULL) {
             printCommand(temp);
@@ -157,8 +156,16 @@ void printTerm(struct term * t) {
             printf(t->value);
         case EXP:
             printf("(");
-            if (t->exValue != NULL)
-                printExpression(*(t->exValue));
+            if (t->exValue != NULL) {
+                struct expression * temp = *(t->exValue);
+                printExpression(temp);
+                temp = temp->next;
+                while (temp != NULL) {
+                    printf(",");
+                    printExpression(temp);
+                    temp = temp->next;
+                }
+            }
             printf(")");
             break;
         case VAR:
@@ -275,16 +282,32 @@ int isKeyword(char * word) {
     return 0;
 }
 
-char * itoa(int i) {
-    char * a = (char *) malloc(11);
+int isKeywordConstant(char * word) {
+    char * keyconsts[] = {"true","false","null","this"};
+    int i;
+    for (i=0;i<4;i++) {
+        if (strcmp(word,keyconsts[i]) == 0)
+            return 1;
+    }
+    return 0;
+
+}
+/*
+void itoa(int i, char * buff) {
     int j = i;
     int k = 0;
     while (j != 0) {
-        a[k++] = (j % 10) + '0';
+        buff[k++] = (j % 10) + '0';
         j = j / 10;
     }
-    reverse(a);
-    return a;
+    buff[strlen(buff)] = '\0';
+    reverse(buff);
+}*/
+
+char * itoa(int i) {
+  char * res = malloc(8*sizeof(int));
+  sprintf(res, "%d", i);
+  return res;
 }
 
 void reverse(char * s)
@@ -299,3 +322,30 @@ void reverse(char * s)
         s[j] = c;
     }
 }
+
+char *get_filename_ext(char *filename) {
+    char *dot = strrchr(filename, '.');
+    if(!dot || dot == filename) return "";
+    return dot + 1;
+}
+
+char *get_short_fname(char *filename) {
+    char *dot = strrchr(filename, '/');
+    if (!dot || dot == filename) return filename;
+    return dot + 1;
+}
+
+char * strip_extension(char * filename) {
+    char * slash = strrchr(filename,'/');
+    if (slash)
+        return strip_extension(slash+1);
+    char * dot = strrchr(filename, '.');
+    char * ret = (char *) malloc(dot - filename + 1);
+    int i;
+    for (i=0;i<(dot-filename);i++)
+        ret[i] = filename[i];
+
+    ret[dot-filename] = '\0';
+    return ret;
+}
+

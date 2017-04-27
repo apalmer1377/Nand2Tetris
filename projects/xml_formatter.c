@@ -1,6 +1,7 @@
 #include "jack_compiler.h"
 
 void outputClass(char * buff,struct classDec * class) {
+    strcat(buff,"<tokens>\n");
     outputType(buff,"class");
     outputType(buff,class->name);
     outputSymbol(buff,"{");
@@ -17,6 +18,7 @@ void outputClass(char * buff,struct classDec * class) {
         sub = sub->next;
     }
     outputSymbol(buff,"}");
+    strcat(buff,"</tokens>\n");
 }
 
 void outputSub(char * buff, struct subDec * sub) {
@@ -47,7 +49,8 @@ void outputSub(char * buff, struct subDec * sub) {
             temp = temp->next;
         }
     }
-    strcat(buff,"<symbol> ) </symbol>\n<symbol> { </symbol>\n");
+    outputSymbol(buff,")");
+    outputSymbol(buff,"{");
 
     temp = sub->decs;
     while (temp != NULL) {
@@ -61,7 +64,7 @@ void outputSub(char * buff, struct subDec * sub) {
         outputCommand(buff,comm);
         comm = comm->next;
     }
-    strcat(buff,"<symbol> } </symbol>\n");
+    outputSymbol(buff,"}");
     free(comm);
 
 }
@@ -69,6 +72,7 @@ void outputSub(char * buff, struct subDec * sub) {
 void outputVar(char * buff, struct var *v) {
     outputType(buff,v->vtype);
     outputParam(buff,v);
+    outputSymbol(buff,";");
 }
 
 void outputParam(char * buff, struct var * v) {
@@ -106,6 +110,7 @@ void outputLet(char * buff, struct letStatement * state) {
     } 
     outputSymbol(buff,"=");
     outputExpression(buff,state->fro);
+    outputSymbol(buff,";");
 }
 
 void outputIf(char * buff, struct ifStatement * state) {
@@ -119,8 +124,8 @@ void outputIf(char * buff, struct ifStatement * state) {
         outputCommand(buff,temp);
         temp = temp->next;
     } 
-    outputSymbol(buff,"}");
     if (state->elseHead != NULL) {
+        outputSymbol(buff,"}");
         outputType(buff,"else");
         outputSymbol(buff,"{");
         temp = state->elseHead;
@@ -149,12 +154,14 @@ void outputWhile(char * buff, struct whileStatement * state) {
 void outputDo(char * buff, struct doStatement * state) {
     outputType(buff,"do");
     outputTerm(buff,state->sub);
+    outputSymbol(buff,";");
 }
 
 void outputReturn(char * buff, struct returnStatement * state) {
     outputType(buff,"return");
     if (state->ret != NULL)
         outputExpression(buff,state->ret);
+    outputSymbol(buff,";");
 }
 
 void outputExpression(char * buff, struct expression * exp) {
@@ -196,8 +203,16 @@ void outputTerm(char * buff, struct term * t) {
             //outputType(buff,t->value);
         case EXP:
             outputSymbol(buff,"(");
-            if (t->exValue != NULL)
-                outputExpression(buff,*(t->exValue));
+            if (t->exValue != NULL) {
+                struct expression * temp = *(t->exValue);
+                outputExpression(buff,temp);
+                temp = temp->next;
+                while (temp != NULL) {
+                    outputSymbol(buff,",");
+                    outputExpression(buff,temp);
+                    temp = temp->next;
+                }
+            }
             outputSymbol(buff,")");
             break;
         case VAR:
@@ -213,19 +228,31 @@ void outputTerm(char * buff, struct term * t) {
 
 void outputSymbol(char *buff, char * sym) {
     strcat(buff,"<symbol> ");
-    strcat(buff,sym);
+    if (strcmp(sym,"<") == 0)
+        strcat(buff,"&lt;");
+    else if (strcmp(sym,">") == 0)
+        strcat(buff,"&gt;");
+    else
+        strcat(buff,sym);
     strcat(buff," </symbol>\n");
 }
 
 void outputType(char *buff, char * type) {
-    if (isKeyword(type)) {
-        strcat(buff,"<keyword> ");
+    if (isKeywordConstant(type)) {
+        strcat(buff,"<keywordConstant> ");
         strcat(buff,type);
-        strcat(buff," </keyword\n");
+        strcat(buff," </keywordConstant>\n");
         return;
     }
 
-    strcat(buff,"<identifier ");
+    if (isKeyword(type)) {
+        strcat(buff,"<keyword> ");
+        strcat(buff,type);
+        strcat(buff," </keyword>\n");
+        return;
+    }
+
+    strcat(buff,"<identifier> ");
     strcat(buff,type);
     strcat(buff, " </identifier>\n");
 }

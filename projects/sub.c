@@ -8,6 +8,7 @@ void parseSub(FILE * f,char * token, struct subDec ** sub) {
         parseParam(f,token,params + i);
         if (i > 0)
             params[i-1]->next = params[i];
+        i++;
     }
     
     if (params != NULL)
@@ -26,8 +27,18 @@ void parseSub(FILE * f,char * token, struct subDec ** sub) {
             i = parseVars(f,token,vars,i);
             continue;
         }
+        
+        /*
+        if (j == 0) {
+            struct var * v = vars[0];
+            while (v != NULL) {
+                printVar(v);
+                v = v->next;
+            }
+        }*/
 
         parseCommand(f,token,s+j);
+        //printCommand(s[j]);
         if (j > 0) {
             s[j-1]->next = s[j];
         } 
@@ -73,7 +84,6 @@ void initSub(FILE *f, char * token, struct subDec ** sub) {
 void parseParam(FILE * f,char * token,struct var ** param) {
     *param = (struct var *) malloc(VAR_SIZE);
 
-    parseToken(f,token);
     char * type = (char *) malloc(strlen(token) + 1);
     strcpy(type,token);
 
@@ -87,4 +97,7 @@ void parseParam(FILE * f,char * token,struct var ** param) {
     (*param)->next = NULL;
 
     parseToken(f,token);
+    if (token[0] == ',')
+        parseToken(f,token);
+
 }
