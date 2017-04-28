@@ -37,11 +37,6 @@ enum commandType {
     DEC
 };
 
-enum classVarType {
-    STATIC,
-    FIELD
-};
-
 enum termType {
     NONE,
     INT,
@@ -127,7 +122,6 @@ struct opterm {
     struct opterm * next;
 } opterm;
 
-
 void parseFile(char*,char*,char*);
 char parseToken(FILE*,char*);
 void skipLine(FILE*);
@@ -210,5 +204,6 @@ void outputInt(char*,int);
 void outputString(char*,char*);
 void outputSubCall(char*,char*);
 
+void compileFile(char*);
 
 #endif
