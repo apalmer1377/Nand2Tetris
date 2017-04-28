@@ -1,6 +1,7 @@
 #include "jack_compiler.h"
 
 void tokenizeClass(char * buff,struct classDec * class) {
+
     strcat(buff,"<tokens>\n");
     tokenizeType(buff,"class");
     tokenizeType(buff,class->name);
@@ -17,8 +18,13 @@ void tokenizeClass(char * buff,struct classDec * class) {
         tokenizeSub(buff,sub);
         sub = sub->next;
     }
+
     tokenizeSymbol(buff,"}");
     strcat(buff,"</tokens>\n");
+
+    free(temp);
+    free(sub);
+
 }
 
 void tokenizeSub(char * buff, struct subDec * sub) {
@@ -135,6 +141,7 @@ void tokenizeIf(char * buff, struct ifStatement * state) {
         }
     }
     tokenizeSymbol(buff,"}");
+    free(temp);
 }
 
 void tokenizeWhile(char * buff, struct whileStatement * state) {
@@ -149,6 +156,7 @@ void tokenizeWhile(char * buff, struct whileStatement * state) {
         temp = temp->next;
     }
     tokenizeSymbol(buff,"}");
+    free(temp);
 }
 
 void tokenizeDo(char * buff, struct doStatement * state) {
@@ -167,13 +175,12 @@ void tokenizeReturn(char * buff, struct returnStatement * state) {
 void tokenizeExpression(char * buff, struct expression * exp) {
     tokenizeTerm(buff,exp->t);
 
-    if (exp->op != NULL) {
-        int i = 0;
-        while (exp->op[i] != NULL) {
-            tokenizeOpTerm(buff,exp->op[i]);
-            i++;
-        }
+    struct opterm * temp = exp->op;
+    while (temp != NULL) {
+        tokenizeOpTerm(buff,temp);
+        temp = temp->next;
     }
+    free(temp);
 }
 
 void tokenizeOpTerm(char * buff, struct opterm * op) {
@@ -182,6 +189,7 @@ void tokenizeOpTerm(char * buff, struct opterm * op) {
     t[1] = '\0';
     tokenizeSymbol(buff,t);
     tokenizeTerm(buff,op->t);
+    free(t);
 }
 
 void tokenizeTerm(char * buff, struct term * t) {
@@ -190,6 +198,7 @@ void tokenizeTerm(char * buff, struct term * t) {
         m[0] = t->unaryOp;
         m[1] = '\0';
         tokenizeSymbol(buff,m);
+        free(m);
     }
     switch(t->type) {
         case INT:
@@ -204,7 +213,7 @@ void tokenizeTerm(char * buff, struct term * t) {
         case EXP:
             tokenizeSymbol(buff,"(");
             if (t->exValue != NULL) {
-                struct expression * temp = *(t->exValue);
+                struct expression * temp = (t->exValue);
                 tokenizeExpression(buff,temp);
                 temp = temp->next;
                 while (temp != NULL) {
@@ -212,6 +221,7 @@ void tokenizeTerm(char * buff, struct term * t) {
                     tokenizeExpression(buff,temp);
                     temp = temp->next;
                 }
+                free(temp);
             }
             tokenizeSymbol(buff,")");
             break;
@@ -219,7 +229,7 @@ void tokenizeTerm(char * buff, struct term * t) {
             tokenizeType(buff,t->value);
             if (t->exValue != NULL) {
                 tokenizeSymbol(buff,"[");
-                tokenizeExpression(buff,*(t->exValue));
+                tokenizeExpression(buff,(t->exValue));
                 tokenizeSymbol(buff,"]");
             }
             break;

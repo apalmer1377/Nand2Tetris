@@ -16,10 +16,10 @@
 #define MAX_LEN 256
 #define OPS "+-*/&|<>=~"
 #define SYMBOLS "(){}[];,\""
-#define CLASS_VAR_SIZE sizeof(struct classVar *)
-#define VAR_SIZE sizeof(struct var *)
-#define SUB_SIZE sizeof(struct subDec *)
-#define COMM_SIZE sizeof(struct command *)
+#define CLASS_SIZE sizeof(struct classDec)
+#define VAR_SIZE sizeof(struct var)
+#define SUB_SIZE sizeof(struct subDec)
+#define COMM_SIZE sizeof(struct command)
 
 enum subType {
     CONSTRUCTOR,
@@ -64,12 +64,12 @@ struct term {
     char * value;
     int intValue;
     char unaryOp;
-    struct expression ** exValue;
+    struct expression * exValue;
 } term;
 
 struct expression {
     struct term * t;
-    struct opterm ** op;
+    struct opterm * op;
     struct expression * next;
 } expression;
 
@@ -124,6 +124,7 @@ struct classDec {
 struct opterm {
     char oper;
     struct term * t;
+    struct opterm * next;
 } opterm;
 
 
@@ -135,7 +136,7 @@ void parseClass(FILE*,char*,struct classDec **);
 void parseLet(FILE*,char*,struct letStatement *);
 void parseExpression(FILE*,struct expression**,char*,char);
 void parseTerm(FILE*,char*,struct term*);
-void parseOpTerm(FILE*,char*,struct opterm**,int);
+void parseOpTerm(FILE*,char*,struct opterm**);
 int isInArray(char,char*);
 void parseString(FILE*,char*);
 void printLet(struct letStatement*);

@@ -130,14 +130,13 @@ void printExpression(struct expression * exp) {
     //printf("%s\n",exp->t->value);
     printTerm(exp->t);
 
-    if (exp->op != NULL) {
-        int i = 0;
-        while (exp->op[i] != NULL) {
-            printf(" %c ",exp->op[i]->oper);
-            printTerm(exp->op[i]->t);
-            i++;
-        }
+    struct opterm * temp = exp->op;
+    while (temp != NULL) {
+        printf(" %c ",temp->oper);
+        printTerm(temp->t);
+        temp = temp->next;
     }
+    free(temp);
 }
 
 void printTerm(struct term * t) {
@@ -157,7 +156,7 @@ void printTerm(struct term * t) {
         case EXP:
             printf("(");
             if (t->exValue != NULL) {
-                struct expression * temp = *(t->exValue);
+                struct expression * temp = (t->exValue);
                 printExpression(temp);
                 temp = temp->next;
                 while (temp != NULL) {
@@ -172,7 +171,7 @@ void printTerm(struct term * t) {
             printf(t->value);
             if (t->exValue != NULL) {
                 printf("[");
-                printExpression(*(t->exValue));
+                printExpression((t->exValue));
                 printf("]");
             }
             break;
@@ -292,17 +291,6 @@ int isKeywordConstant(char * word) {
     return 0;
 
 }
-/*
-void itoa(int i, char * buff) {
-    int j = i;
-    int k = 0;
-    while (j != 0) {
-        buff[k++] = (j % 10) + '0';
-        j = j / 10;
-    }
-    buff[strlen(buff)] = '\0';
-    reverse(buff);
-}*/
 
 char * itoa(int i) {
   char * res = malloc(8*sizeof(int));

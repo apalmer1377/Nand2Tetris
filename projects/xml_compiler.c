@@ -1,6 +1,7 @@
 #include "jack_compiler.h"
 
 void outputClass(char * buff,struct classDec * class) {
+    strcat(buff,"<class>\n");
     outputType(buff,"class");
     outputType(buff,class->name);
     outputSymbol(buff,"{");
@@ -16,11 +17,15 @@ void outputClass(char * buff,struct classDec * class) {
         outputSub(buff,sub);
         sub = sub->next;
     }
+
     outputSymbol(buff,"}");
+    strcat(buff,"</class>\n");
+    free(temp);
+    free(sub);
 }
 
 void outputSub(char * buff, struct subDec * sub) {
-    strcat(buff,"<keyword> ");
+    strcat(buff,"<subroutineDec>\n<keyword> ");
     switch(sub->type) {
         case CONSTRUCTOR:
             strcat(buff,"constructor");
@@ -60,6 +65,7 @@ void outputSub(char * buff, struct subDec * sub) {
         outputVar(buff,temp);
         temp = temp->next;
     }
+
     free(temp);
 
 
@@ -71,7 +77,7 @@ void outputSub(char * buff, struct subDec * sub) {
     }
     strcat(buff,"</statements>\n");
     outputSymbol(buff,"}");
-    strcat(buff,"</subroutineBody>");
+    strcat(buff,"</subroutineBody>\n</subroutineDec>\n");
     free(comm);
 
 }
@@ -86,7 +92,7 @@ void outputVar(char * buff, struct var *v) {
     outputParam(buff,v);
     outputSymbol(buff,";");
 
-    if (strcmp(v->type,"static") == 0 || strcmp(v->type,"field") == 0)
+    if (strcmp(v->vtype,"static") == 0 || strcmp(v->vtype,"field") == 0)
         strcat(buff,"</classVarDec>\n");
     else
         strcat(buff,"</varDec>\n");
@@ -168,6 +174,7 @@ void outputIf(char * buff, struct ifStatement * state) {
 
     }
     outputSymbol(buff,"}");
+    free(temp);
 }
 
 void outputWhile(char * buff, struct whileStatement * state) {
@@ -176,16 +183,21 @@ void outputWhile(char * buff, struct whileStatement * state) {
     outputExpression(buff,state->cond);
     outputSymbol(buff,")");
     outputSymbol(buff,"{");
+    strcat(buff,"<statements>\n");
     struct command * temp = state->commands;
     while (temp != NULL) {
         outputCommand(buff,temp);
         temp = temp->next;
     }
+
+    strcat(buff,"</statements>\n");
     outputSymbol(buff,"}");
+    free(temp);
 }
 
 void outputDo(char * buff, struct doStatement * state) {
     outputType(buff,"do");
+    state->sub->unaryOp = 'D';
     outputTerm(buff,state->sub);
     outputSymbol(buff,";");
 }
@@ -201,13 +213,12 @@ void outputExpression(char * buff, struct expression * exp) {
     strcat(buff,"<expression>\n");
     outputTerm(buff,exp->t);
 
-    if (exp->op != NULL) {
-        int i = 0;
-        while (exp->op[i] != NULL) {
-            outputOpTerm(buff,exp->op[i]);
-            i++;
-        }
+    struct opterm * temp = exp->op;
+    while (temp != NULL) {
+        outputOpTerm(buff,temp);
+        temp = temp->next;
     }
+    free(temp);
 
     strcat(buff,"</expression>\n");
 }
@@ -218,16 +229,20 @@ void outputOpTerm(char * buff, struct opterm * op) {
     t[1] = '\0';
     outputSymbol(buff,t);
     outputTerm(buff,op->t);
+    free(t);
 }
 
 void outputTerm(char * buff, struct term * t) {
-    strcat(buff,"<term>\n");
-    if (t->unaryOp) {
-        char * m = (char*) malloc(2);
-        m[0] = t->unaryOp;
-        m[1] = '\0';
-        outputSymbol(buff,m);
+    if (t->unaryOp != 'D') {
         strcat(buff,"<term>\n");
+        if (t->unaryOp) {
+            char * m = (char*) malloc(2);
+            m[0] = t->unaryOp;
+            m[1] = '\0';
+            outputSymbol(buff,m);
+            strcat(buff,"<term>\n");
+            free(m);
+        }
     }
     switch(t->type) {
         case INT:
@@ -243,7 +258,7 @@ void outputTerm(char * buff, struct term * t) {
             if (t->type == SUB)
                 strcat(buff,"<expressionList>\n");
             if (t->exValue != NULL) {
-                struct expression * temp = *(t->exValue);
+                struct expression * temp = (t->exValue);
                 outputExpression(buff,temp);
                 temp = temp->next;
                 while (temp != NULL) {
@@ -251,6 +266,7 @@ void outputTerm(char * buff, struct term * t) {
                     outputExpression(buff,temp);
                     temp = temp->next;
                 }
+                free(temp);
             }
             if (t->type == SUB)
                 strcat(buff,"</expressionList>\n");
@@ -260,14 +276,16 @@ void outputTerm(char * buff, struct term * t) {
             outputType(buff,t->value);
             if (t->exValue != NULL) {
                 outputSymbol(buff,"[");
-                outputExpression(buff,*(t->exValue));
+                outputExpression(buff,(t->exValue));
                 outputSymbol(buff,"]");
             }
             break;
     }
-    if (t->unaryOp)
+    if (t->unaryOp != 'D') {
+        if (t->unaryOp)
+            strcat(buff,"</term>\n");
         strcat(buff,"</term>\n");
-    strcat(buff,"</term>\n");
+    }
 }
 
 void outputSymbol(char *buff, char * sym) {

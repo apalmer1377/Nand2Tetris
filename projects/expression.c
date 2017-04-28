@@ -1,10 +1,12 @@
 #include "jack_compiler.h"
 
 void parseExpression(FILE* f, struct expression **exp, char* token, char end) {
-    struct term * t = (struct term *) malloc(sizeof(struct term *));
-    struct opterm ** ot = (struct opterm **) malloc(10*sizeof(struct opterm *));
-    (*exp) = (struct expression *) malloc(sizeof(struct expression *));
+    struct term * t = (struct term *) malloc(sizeof(struct term));
+    t->unaryOp = 0;
+    struct opterm ** ot = (struct opterm **) malloc(8*sizeof(struct opterm *));
+    (*exp) = (struct expression *) malloc(sizeof(struct expression));
     (*exp)->next = NULL;
+    (*exp)->op = NULL;
 
     parseTerm(f,token,t);
 
@@ -16,20 +18,25 @@ void parseExpression(FILE* f, struct expression **exp, char* token, char end) {
             break;
 
         if (isInArray(token[0],OPS)) {
-            parseOpTerm(f,token,ot,j++);
+            parseOpTerm(f,token,ot+j);
+            if (j > 0)
+                ot[j-1]->next = ot[j];
+            j++;
         }
 
     }
 
     (*exp)->t = t;
-    (*exp)->op = ot;
+    if (j>0)
+        (*exp)->op = *ot;
+
+    free(ot);
 
     return;
 }
 
 void parseTerm(FILE* f,char * token, struct term * t) {
-    //char c = parseToken(f,token);
-    char * temp = (char*) malloc(strlen(token)+1);
+    //char * temp = (char*) malloc(65);
     int i = atoi(token);
 
     t->type = INT;
@@ -50,8 +57,9 @@ void parseTerm(FILE* f,char * token, struct term * t) {
         struct expression **texp = (struct expression **) malloc(sizeof(struct expression *));
         parseToken(f,token);
         parseExpression(f,texp,token,')');
-        t->exValue = texp;
+        t->exValue = texp[0];
         parseToken(f,token);
+        free(texp);
         return;
     }
 
@@ -61,8 +69,11 @@ void parseTerm(FILE* f,char * token, struct term * t) {
             t->type = STRING;
             parseString(f,token);
         }
-        strcpy(temp,token);
-        t->value = temp;
+        //char * temp = (char*) malloc(strlen(token)+1);
+        t->value = (char*) malloc(65);
+        strcpy(t->value,token);
+        //strcpy(temp,token);
+        //t->value = temp;
     }    
 
     parseToken(f,token);
@@ -86,11 +97,12 @@ void parseTerm(FILE* f,char * token, struct term * t) {
                 i++; 
             }
         }
-        if ( i > 0) 
-            t->exValue = texp;
-        else
-            t->exValue = NULL;
+
+        if (i > 0) 
+            t->exValue = texp[0];
+
         parseToken(f,token);
+        free(texp);
         
     }
 
@@ -109,12 +121,12 @@ void parseString(FILE * f, char * token) {
     return;
 }
 
-void parseOpTerm(FILE* f,char * token, struct opterm ** op,int i) {
-    op[i] = (struct opterm *) malloc(sizeof(struct opterm *));
-    op[i]->oper = token[0]; 
-    op[i]->t = (struct term *) malloc(sizeof(struct term *));
+void parseOpTerm(FILE* f,char * token, struct opterm ** op) {
+    (*op) = (struct opterm *) malloc(sizeof(struct opterm));
+    (*op)->oper = token[0]; 
+    (*op)->t = (struct term *) malloc(sizeof(struct term));
+    (*op)->next = NULL;
     parseToken(f,token);
-    parseTerm(f,token,op[i]->t);
-    //if (token[0] == ')')
-    //    parseToken(f,token);
+    (*op)->t->unaryOp = 0;
+    parseTerm(f,token,(*op)->t);
 }

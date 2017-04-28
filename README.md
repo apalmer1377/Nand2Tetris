@@ -24,7 +24,7 @@ Chapter 8: projects/08/\*.asm, translator.c, Complete VMTranslator written in C 
 
 Chapter 9: none
 
-Chapter 10: jack\_compiler.c, xml\_formatter.c, class.c, sub.c, command.c, expression.c, util.c, jack\_compiler.h, Makefile -- Tokenizer working, still need to write second XML outputter
+Chapter 10: jack\_compiler.c, xml\_formatter.c, class.c, sub.c, command.c, expression.c, util.c, jack\_compiler.h, Makefile -- both tokenizer and XML outputter written in C working.
     \*\*NOTE: The XML outputted by the program is slightly different than the examples given, for two reasons:
                 1. The four "keyword constants" I marked as such, so that in the XML, "null" "this" "true" and "false" are enclosed in "<keywordConstant>" tags.  In the examples, these are just "<keyword>" tags.
                 This was more of a personal preference, and doesn't affect the actual performance.

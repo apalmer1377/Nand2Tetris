@@ -11,8 +11,8 @@ void parseSub(FILE * f,char * token, struct subDec ** sub) {
         i++;
     }
     
-    if (params != NULL)
-        (*sub)->paramList = params[0];
+    if (i > 0)
+        (*sub)->paramList = *params;
 
     parseToken(f,token);
     parseToken(f,token);
@@ -28,17 +28,7 @@ void parseSub(FILE * f,char * token, struct subDec ** sub) {
             continue;
         }
         
-        /*
-        if (j == 0) {
-            struct var * v = vars[0];
-            while (v != NULL) {
-                printVar(v);
-                v = v->next;
-            }
-        }*/
-
         parseCommand(f,token,s+j);
-        //printCommand(s[j]);
         if (j > 0) {
             s[j-1]->next = s[j];
         } 
@@ -46,8 +36,15 @@ void parseSub(FILE * f,char * token, struct subDec ** sub) {
 
     }
 
-    (*sub)->decs = *vars;
-    (*sub)->comm = *s;
+    if (i>0)
+        (*sub)->decs = *vars;
+
+    if (j>0)
+        (*sub)->comm = *s;
+
+    free(params);
+    free(vars);
+    free(s);
 }
 
 void initSub(FILE *f, char * token, struct subDec ** sub) {
@@ -61,8 +58,6 @@ void initSub(FILE *f, char * token, struct subDec ** sub) {
     if (strcmp(token,"method") == 0)
         (*sub)->type = METHOD;
 
-    char * throwaway = (char *) malloc(strlen(token) + 1);
-    strcpy(throwaway,token);
     parseToken(f,token);
 
     (*sub)->varType = (char *) malloc(strlen(token) + 1);
@@ -84,16 +79,16 @@ void initSub(FILE *f, char * token, struct subDec ** sub) {
 void parseParam(FILE * f,char * token,struct var ** param) {
     *param = (struct var *) malloc(VAR_SIZE);
 
-    char * type = (char *) malloc(strlen(token) + 1);
-    strcpy(type,token);
+    (*param)->type = (char *) malloc(strlen(token) + 1);
+    strcpy((*param)->type,token);
 
     parseToken(f,token);
-    char * name = (char *) malloc(strlen(token) + 1);
-    strcpy(name,token);
+    (*param)->name = (char *) malloc(strlen(token) + 1);
+    strcpy((*param)->name,token);
 
     (*param)->vtype = NULL;
-    (*param)->type = type;
-    (*param)->name = name;
+    //(*param)->type = type;
+    //(*param)->name = name;
     (*param)->next = NULL;
 
     parseToken(f,token);

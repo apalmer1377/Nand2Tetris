@@ -1,13 +1,13 @@
 #include "jack_compiler.h"
 
 void parseClass(FILE *f, char * token, struct classDec ** newClass) {
-    (*newClass) = (struct classDec *) malloc(sizeof(struct classDec *));
+
+    (*newClass) = (struct classDec *) malloc(CLASS_SIZE);
     parseToken(f,token);
 
     (*newClass)->name = (char *) malloc(strlen(token) + 1); 
     strcpy((*newClass)->name,token);
 
-    //(*newClass)->name = className;
     (*newClass)->vars = NULL;
     (*newClass)->subs = NULL;
     char c;
@@ -18,7 +18,7 @@ void parseClass(FILE *f, char * token, struct classDec ** newClass) {
     int i = 0,j = 0;
     char * vtype = NULL;
     char * type = NULL;
-    struct var ** temp = (struct var **) malloc(10*sizeof(struct var *));
+    struct var ** temp = (struct var **) malloc(16*sizeof(struct var *));
     struct subDec ** stemp = (struct subDec **) malloc(16*sizeof(struct subDec *));
     parseToken(f,token);
     while (token[0] != '}') {
@@ -46,14 +46,14 @@ void parseClass(FILE *f, char * token, struct classDec ** newClass) {
         }
     }
 
-    if (temp != NULL)
-        (*newClass)->vars = temp[0];
+    if (i>0)
+        (*newClass)->vars = *temp;
 
-    if (stemp != NULL)
-        (*newClass)->subs = stemp[0];
+    if (j>0)
+        (*newClass)->subs = *stemp;
 
-    //free(temp);
-    //free(stemp);
+    free(temp);
+    free(stemp);
 
     return;
 }
@@ -84,17 +84,17 @@ void parseVar(FILE * f, char * token, char * vvtype, char * ttype, struct var **
     parseToken(f,token);
 
 
-    char * v = (char *) malloc(strlen(vvtype) + 1);
-    char * t = (char *) malloc(strlen(ttype) + 1);
-    char * n = (char *) malloc(strlen(token) + 1);
+    (*cvar)->vtype = (char *) malloc(strlen(vvtype) + 1);
+    (*cvar)->type = (char *) malloc(strlen(ttype) + 1);
+    (*cvar)->name = (char *) malloc(strlen(token) + 1);
 
-    strcpy(v,vvtype);
-    strcpy(t,ttype);
-    strcpy(n,token);
+    strcpy((*cvar)->vtype,vvtype);
+    strcpy((*cvar)->type,ttype);
+    strcpy((*cvar)->name,token);
 
-    (*cvar)->vtype = v;
-    (*cvar)->type = t;
-    (*cvar)->name = n;
+    //(*cvar)->vtype = v;
+    //(*cvar)->type = t;
+    //(*cvar)->name = n;
 
     (*cvar)->next = NULL;
 
