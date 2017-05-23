@@ -36,7 +36,6 @@ char parseToken(FILE * f, char * arr) {
         arr[i++] = c;
     }
     arr[i] = '\0';
-    //printf("%s\n",arr);
     return c;
 }
 
@@ -337,3 +336,71 @@ char * strip_extension(char * filename) {
     return ret;
 }
 
+long power(long i,long j) {
+    int k,m;
+    m = 1;
+    for (k=0;k<j;k++) {
+        m *= i;
+    }
+    return m;
+}
+
+long hash(char * str,int d) {
+    long h = 0;
+    int i;
+    int len = strlen(str);
+    for (i=0; i < len; i++) {
+        h = ( d * ( h + str[i] * ( power(7,len-i-1) ) ) ) % 709;
+    }
+    return h;
+}
+
+int find_open_hash(struct tableVar ** table, char * name, int depth, int offset) {
+    long h = (hash(name, depth) + offset) % 709;
+    struct tableVar * f = table[h];
+    if (f == NULL) {
+        return h;    
+    }
+    if (strcmp(name,f->name) == 0 && f->depth == depth) {
+        return -1;
+    }
+    return find_hash(table, name, depth, offset + 1);
+}
+
+int find_hash(struct tableVar ** table, char * name, int depth, int offset) {
+    long h = (hash(name, depth) + offset) % 709;
+    struct tableVar * f = table[h];
+    if (f == NULL) {
+        return -1;    
+    }
+    if (strcmp(name,f->name) == 0 && f->depth == depth) {
+        return h;
+    }
+    return find_hash(table, name, depth, offset + 1);
+}
+
+
+void insert_hash(struct tableVar ** table, struct var * tvar, enum vmType t, int depth, int index) {
+    char * name = tvar->name;
+    int open = find_open_hash(table, name, depth, 0);
+    if (open < 0) {
+        return;
+    }
+    table[open] = (struct tableVar *) malloc(sizeof(struct tableVar));
+    *(table[open]) = (struct tableVar) { name, tvar->type, t, depth, index };
+}
+
+char * getVMType(enum vmType type) {
+    switch(type) {
+        case STATIC:
+            return "static";
+        case FIELD:
+            return "field";
+        case LOCAL:
+            return "local";
+        case ARG:
+            return "argument";
+        case CONSTANT:
+            return "constant";
+    }
+}

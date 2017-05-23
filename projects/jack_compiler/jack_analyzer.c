@@ -44,7 +44,7 @@ void parseFile(char *file, char * tokens, char * xml) {
     if (f == NULL)
         exit(1);
 
-    char * token = malloc(MAX_LEN);
+    char * token = (char *) malloc(MAX_LEN);
     char c;
     int i = 0;
     struct classDec ** newClass = (struct classDec **) malloc(10*sizeof(struct classDec *));

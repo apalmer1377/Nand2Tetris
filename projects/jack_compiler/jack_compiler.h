@@ -1,5 +1,3 @@
-
-
 #ifndef PARSE
 #define PARSE
 
@@ -8,6 +6,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <limits.h>
+#include <math.h>
 #include <dirent.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -45,6 +44,17 @@ enum termType {
     VAR,
     SUB,
     EXP
+};
+
+enum vmType {
+    STATIC,
+    LOCAL,
+    ARG,
+    FIELD,
+    CONSTANT,
+    POINTER,
+    THAT,
+    CLASSNAME
 };
 
 struct var {
@@ -122,6 +132,14 @@ struct opterm {
     struct opterm * next;
 } opterm;
 
+struct tableVar {
+    char * name;
+    char * dtype;
+    enum vmType type;
+    int depth;
+    int index;
+} tableVar;
+
 void parseFile(char*,char*,char*);
 char parseToken(FILE*,char*);
 void skipLine(FILE*);
@@ -182,8 +200,15 @@ int isKeyword(char *);
 int isKeywordConstant(char*);
 
 char * get_filename_ext(char*);
-char * get_short_name(char*);
+char * get_short_fname(char*);
 char * strip_extension(char*);
+
+long hash(char*,int);
+int find_hash(struct tableVar**,char*,int,int);
+int find_open_hash(struct tableVar**,char*,int,int);
+char * getVMType(enum vmType);
+
+void insert_hash(struct tableVar**,struct var *,enum vmType,int,int);
 
 void outputClass(char*,struct classDec*);
 void outputSub(char*,struct subDec*);
@@ -205,5 +230,25 @@ void outputString(char*,char*);
 void outputSubCall(char*,char*);
 
 void compileFile(char*);
+void compileClass(char*,struct classDec*,char*);
+void compileSub(char*,struct subDec*,struct tableVar **,int*);
+void compileCommand(char*,struct command*,struct tableVar **,struct tableVar **,int);
+void compileLet(char*,struct letStatement*,struct tableVar **,struct tableVar**,int);
+void compileIf(char*,struct ifStatement*,struct tableVar **,struct tableVar**,int*);
+void compileWhile(char*,struct whileStatement*,struct tableVar **,struct tableVar**,int*);
+void compileDo(char*,struct doStatement*,struct tableVar **,struct tableVar**,int);
+void compileReturn(char*,struct returnStatement*,struct tableVar **,struct tableVar**,int);
+void compileExpression(char*, struct expression *, struct tableVar **, struct tableVar **,int);
+void compileTerm(char*, struct term *,struct tableVar **, struct tableVar **,int);
+void compileOpTerm(char*, struct opterm *,struct tableVar **, struct tableVar **,int);
+void compileOp(char*,char,int);
+void compileConstant(char*,int);
+void compileString(char*,char*);
+
+
+
+void compilePushPop(char*,enum vmType,int,int);
+void compileCall(char*,char*,char*,int);
+
 
 #endif
