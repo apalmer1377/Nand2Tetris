@@ -54,7 +54,9 @@ enum vmType {
     CONSTANT,
     POINTER,
     THAT,
-    CLASSNAME
+    CLASSNAME,
+    TEMP,
+    FUNC
 };
 
 struct var {
@@ -230,9 +232,9 @@ void outputString(char*,char*);
 void outputSubCall(char*,char*);
 
 void compileFile(char*);
-void compileClass(char*,struct classDec*,char*);
-void compileSub(char*,struct subDec*,struct tableVar **,int*);
-void compileCommand(char*,struct command*,struct tableVar **,struct tableVar **,int);
+void compileClass(char*,struct classDec*,char*,struct tableVar **,struct tableVar **);
+void compileSub(char*,struct subDec*,struct tableVar **,int*,int,struct tableVar **);
+void compileCommand(char*,struct command*,struct tableVar **,struct tableVar **,int*);
 void compileLet(char*,struct letStatement*,struct tableVar **,struct tableVar**,int);
 void compileIf(char*,struct ifStatement*,struct tableVar **,struct tableVar**,int*);
 void compileWhile(char*,struct whileStatement*,struct tableVar **,struct tableVar**,int*);
@@ -249,6 +251,9 @@ void compileString(char*,char*);
 
 void compilePushPop(char*,enum vmType,int,int);
 void compileCall(char*,char*,char*,int);
+void compileKeyword(char*,char*);
 
+char * getSubType(enum subType);
+void insert_func(struct tableVar **,struct subDec *);
 
 #endif

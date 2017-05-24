@@ -13,6 +13,7 @@ int main(int argc, char **argv) {
         argdir = opendir(argv[1]);
         char * fullname = (char *) malloc(strlen(argv[1]) + 51);
         strcpy(fullname,argv[1]);
+        printf("%s\n",fullname);
         while ((rfile = readdir(argdir)) != NULL) {
             if (strcmp(get_filename_ext(rfile->d_name),"jack") == 0) {
                 tokens[0] = '\0';
@@ -31,12 +32,13 @@ int main(int argc, char **argv) {
     }
 
     parseFile(fname,tokens,xml);
+    return 0;
+
     free(xml);
     free(tokens);
     free(argdir);
     free(rfile);
 
-    return 0;
 }
 
 void parseFile(char *file, char * tokens, char * xml) {

@@ -139,7 +139,7 @@ void printExpression(struct expression * exp) {
 }
 
 void printTerm(struct term * t) {
-    if (t->unaryOp)
+    if (t->unaryOp && (t->unaryOp != 'D'))
         printf("%c",t->unaryOp);
     switch(t->type) {
         case INT:
@@ -292,9 +292,10 @@ int isKeywordConstant(char * word) {
 }
 
 char * itoa(int i) {
-  char * res = malloc(8*sizeof(int));
-  sprintf(res, "%d", i);
-  return res;
+    if (i == 0) return "0";
+    char * res = malloc(8*sizeof(int));
+    sprintf(res, "%d", i);
+    return res;
 }
 
 void reverse(char * s)
@@ -327,6 +328,7 @@ char * strip_extension(char * filename) {
     if (slash)
         return strip_extension(slash+1);
     char * dot = strrchr(filename, '.');
+    if (!dot || dot == filename) return filename;
     char * ret = (char *) malloc(dot - filename + 1);
     int i;
     for (i=0;i<(dot-filename);i++)
@@ -362,6 +364,8 @@ int find_open_hash(struct tableVar ** table, char * name, int depth, int offset)
         return h;    
     }
     if (strcmp(name,f->name) == 0 && f->depth == depth) {
+        printf("NAHH\t%s\n",name);
+        sleep(2);
         return -1;
     }
     return find_hash(table, name, depth, offset + 1);
@@ -384,10 +388,25 @@ void insert_hash(struct tableVar ** table, struct var * tvar, enum vmType t, int
     char * name = tvar->name;
     int open = find_open_hash(table, name, depth, 0);
     if (open < 0) {
-        return;
+        printf("%i\n",open);
+        open = find_hash(table,name,depth,0);
+        if (open < 0) {
+            printf("%s\t%i\t%ld\n",name,open,hash(name,depth));
+            printf("ERRRORRRRRRRR\n");
+            printVar(tvar);
+            sleep(3);
+            return;
+        }
+    *(table[open]) = (struct tableVar) { name, tvar->type, t, depth, index };
     }
     table[open] = (struct tableVar *) malloc(sizeof(struct tableVar));
     *(table[open]) = (struct tableVar) { name, tvar->type, t, depth, index };
+}
+
+void insert_func(struct tableVar ** table, struct subDec * sub) {
+    struct var * t = (struct var *) malloc(sizeof(struct var));
+    *t = (struct var) { sub->varType, getSubType(sub->type), sub->name, NULL };
+    insert_hash(table, t, FUNC, 1, 0);
 }
 
 char * getVMType(enum vmType type) {
@@ -395,12 +414,33 @@ char * getVMType(enum vmType type) {
         case STATIC:
             return "static";
         case FIELD:
-            return "field";
+            return "this";
         case LOCAL:
             return "local";
         case ARG:
             return "argument";
         case CONSTANT:
             return "constant";
+        case POINTER:
+            return "pointer";
+        case THAT:
+            return "that";
+        case TEMP:
+            return "temp";
+        default:
+            return "ERROR";
+    }
+}
+
+char * getSubType(enum subType type) {
+    switch(type) {
+        case CONSTRUCTOR:
+            return "constructor";
+        case METHOD:
+            return "method";
+        case FUNCTION:
+            return "function";
+        default:
+            return "ERROR";
     }
 }
