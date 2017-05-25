@@ -358,13 +358,15 @@ long hash(char * str,int d) {
 }
 
 int find_open_hash(struct tableVar ** table, char * name, int depth) {
-    long h;
-    struct tableVar * f;
-    int offset;
+    long h = 0;
+    int offset = 0;
+    struct tableVar * f = (struct tableVar *) malloc(sizeof(struct tableVar));
     
     for (offset = 0; offset < 709; offset++) {
+
         h = (hash(name, depth) + offset) % 709;
         f = table[h];
+
         if (f == NULL) {
             return h;    
         }
@@ -372,11 +374,12 @@ int find_open_hash(struct tableVar ** table, char * name, int depth) {
             return -1;
         }
     }
+    free(f);
 }
 
 int find_hash(struct tableVar ** table, char * name, int depth) {
-    int offset;
-    long h;
+    int offset = 0;
+    long h = 0;
     struct tableVar * f = (struct tableVar *) malloc(sizeof(struct tableVar));
     for (offset = 0; offset < 709; offset++) {
 

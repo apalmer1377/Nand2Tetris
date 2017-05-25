@@ -88,7 +88,7 @@ void compileFile(char * fname, char * vm) {
 void compileClass(char * vm, struct classDec * class, char * classname, struct tableVar ** class_scope, struct tableVar ** sub_scope) {
     int d = 1;
 
-    int j;
+    int j=0;
     for (j=0;j < 709; j++) {
         if (class_scope[j] != NULL)
             class_scope[j] = NULL;
@@ -98,7 +98,7 @@ void compileClass(char * vm, struct classDec * class, char * classname, struct t
     *(class_scope[0]) = (struct tableVar) {classname,"class",CLASSNAME,0,0};
 
     struct var * temp = class->vars;
-    long h;
+    long h=0;
     int s = 0,f = 0;
     while (temp != NULL) {
         h = hash(temp->name, 1);
