@@ -206,8 +206,8 @@ char * get_short_fname(char*);
 char * strip_extension(char*);
 
 long hash(char*,int);
-int find_hash(struct tableVar**,char*,int,int);
-int find_open_hash(struct tableVar**,char*,int,int);
+int find_hash(struct tableVar**,char*,int);
+int find_open_hash(struct tableVar**,char*,int);
 char * getVMType(enum vmType);
 
 void insert_hash(struct tableVar**,struct var *,enum vmType,int,int);
@@ -231,7 +231,7 @@ void outputInt(char*,int);
 void outputString(char*,char*);
 void outputSubCall(char*,char*);
 
-void compileFile(char*);
+void compileFile(char*,char*);
 void compileClass(char*,struct classDec*,char*,struct tableVar **,struct tableVar **);
 void compileSub(char*,struct subDec*,struct tableVar **,int*,int,struct tableVar **);
 void compileCommand(char*,struct command*,struct tableVar **,struct tableVar **,int*);

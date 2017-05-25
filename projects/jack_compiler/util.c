@@ -357,47 +357,52 @@ long hash(char * str,int d) {
     return h;
 }
 
-int find_open_hash(struct tableVar ** table, char * name, int depth, int offset) {
-    long h = (hash(name, depth) + offset) % 709;
-    struct tableVar * f = table[h];
-    if (f == NULL) {
-        return h;    
+int find_open_hash(struct tableVar ** table, char * name, int depth) {
+    long h;
+    struct tableVar * f;
+    int offset;
+    
+    for (offset = 0; offset < 709; offset++) {
+        h = (hash(name, depth) + offset) % 709;
+        f = table[h];
+        if (f == NULL) {
+            return h;    
+        }
+        if (strcmp(name,f->name) == 0 && f->depth == depth) {
+            return -1;
+        }
     }
-    if (strcmp(name,f->name) == 0 && f->depth == depth) {
-        printf("NAHH\t%s\n",name);
-        sleep(2);
-        return -1;
-    }
-    return find_hash(table, name, depth, offset + 1);
 }
 
-int find_hash(struct tableVar ** table, char * name, int depth, int offset) {
-    long h = (hash(name, depth) + offset) % 709;
-    struct tableVar * f = table[h];
-    if (f == NULL) {
-        return -1;    
+int find_hash(struct tableVar ** table, char * name, int depth) {
+    int offset;
+    long h;
+    struct tableVar * f = (struct tableVar *) malloc(sizeof(struct tableVar));
+    for (offset = 0; offset < 709; offset++) {
+
+        h = (hash(name, depth) + offset) % 709;
+        f = table[h];
+
+        if (f == NULL) {
+            return -1;    
+        }
+
+        if (strcmp(name,f->name) == 0 && f->depth == depth) {
+            return h;
+        }
     }
-    if (strcmp(name,f->name) == 0 && f->depth == depth) {
-        return h;
-    }
-    return find_hash(table, name, depth, offset + 1);
+    free(f);
 }
 
 
 void insert_hash(struct tableVar ** table, struct var * tvar, enum vmType t, int depth, int index) {
     char * name = tvar->name;
-    int open = find_open_hash(table, name, depth, 0);
+    int open = find_open_hash(table, name, depth);
     if (open < 0) {
-        printf("%i\n",open);
-        open = find_hash(table,name,depth,0);
+        open = find_hash(table,name,depth);
         if (open < 0) {
-            printf("%s\t%i\t%ld\n",name,open,hash(name,depth));
-            printf("ERRRORRRRRRRR\n");
-            printVar(tvar);
-            sleep(3);
             return;
         }
-    *(table[open]) = (struct tableVar) { name, tvar->type, t, depth, index };
     }
     table[open] = (struct tableVar *) malloc(sizeof(struct tableVar));
     *(table[open]) = (struct tableVar) { name, tvar->type, t, depth, index };

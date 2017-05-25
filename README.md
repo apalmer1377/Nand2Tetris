@@ -30,3 +30,6 @@ Chapter 10: jack\_compiler.c, xml\_formatter.c, class.c, sub.c, command.c, expre
                 This was more of a personal preference, and doesn't affect the actual performance.
                 2. When variables are declared as a list (e.g. "var int i,j;"), the program outputs each declaration on its own, rather than maintaining the original structure.  This was an oversight on my part,
                 but ultimately doesn't affect the end compilation.
+
+Chapter 11: jack\_compiler/\* -- all files from chapter 10, plus compiler (all written in C), passes all tests.
+    \*\*There are some memory errors, but hoping to fix these in the next couple of days.

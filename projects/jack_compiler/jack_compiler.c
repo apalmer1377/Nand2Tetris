@@ -7,26 +7,28 @@ int main(int argc, char ** argv) {
     char * fname = argv[1];
 
     char * ext = get_filename_ext(argv[1]);
+    char * vm = (char *) malloc(INT_MAX);
+
     if (strlen(ext) == 0) {
         argdir = opendir(argv[1]);
         char * fullname = (char *) malloc(strlen(argv[1]) + 51);
         strcpy(fullname,argv[1]);
         while ((rfile = readdir(argdir)) != NULL) {
             if (strcmp(get_filename_ext(rfile->d_name),"jack") == 0) {
+                vm[0] = '\0';
                 strcat(fullname,rfile->d_name);
-                compileFile(fullname);
+                compileFile(fullname,vm);
             }
-            fullname[0] = '\0';
             strcpy(fullname,argv[1]);
         }
         free(fullname);
         free(argdir);
         free(rfile);
+        free(vm);
         return 0;
     }
 
-    printf("%s\n",fname);
-    compileFile(fname);
+    compileFile(fname,vm);
     //free(argdir);
     //free(rfile);
 
@@ -34,14 +36,13 @@ int main(int argc, char ** argv) {
 
 }
 
-void compileFile(char * fname) {
+void compileFile(char * fname, char * vm) {
     FILE * f = fopen(fname,"r");
     if (f == NULL)
         exit(1);
 
     char * cname = strip_extension(fname);
     char * token = (char *) malloc(MAX_LEN);
-    char * vm = (char *) malloc(MAX_LEN);
     vm[0] = '\0';
     char c;
     int i = 0;
@@ -67,13 +68,8 @@ void compileFile(char * fname) {
     struct classDec * temp = *newClass;
     while (temp != NULL) {
         compileClass(vm,temp,cname,class_scope,sub_scope);
-        printf("next\n");
         temp = temp->next;
     }
-
-    printf("hereee\n");
-    printf("%s\n",vm);
-    printf("here\t%s\n",cname);
 
     char * wname = (char *) malloc(strlen(cname) + 4);
     strcpy(wname,cname);
@@ -83,9 +79,10 @@ void compileFile(char * fname) {
     fputs(vm,w);
     fclose(w);
 
-
+    free(newClass);
     free(class_scope);
     free(sub_scope);
+    return;
 }
 
 void compileClass(char * vm, struct classDec * class, char * classname, struct tableVar ** class_scope, struct tableVar ** sub_scope) {
@@ -121,13 +118,9 @@ void compileClass(char * vm, struct classDec * class, char * classname, struct t
 
     sub = class->subs;
     while (sub != NULL) {
-        printf("sub\n");
         compileSub(vm, sub, class_scope,&d,f,sub_scope);
-        printSub(sub);
         sub = sub->next;
     }
-
-    printf("done\n");
 
 }
 
@@ -140,6 +133,9 @@ void compileSub(char * vm, struct subDec * sub, struct tableVar **class_scope,in
 
     struct var * temp = sub->paramList;
     int i = 0;
+    if (sub->type == METHOD)
+        i++;
+
     while (temp != NULL) {
         insert_hash(sub_scope, temp, ARG, 1, i++); 
         temp = temp->next;
@@ -161,7 +157,7 @@ void compileSub(char * vm, struct subDec * sub, struct tableVar **class_scope,in
     strcat(vm,"\n");
 
     if (sub->type == CONSTRUCTOR) {
-        compileConstant(vm,2);
+        compileConstant(vm,c);
         compileCall(vm,NULL,"Memory.alloc",1);
         compilePushPop(vm,POINTER,0,1);
     } else if (sub->type == METHOD) {
@@ -184,20 +180,15 @@ void compileCommand(char * vm, struct command * c, struct tableVar ** class_scop
             break;
         case IF:
             compileIf(vm,c->state,class_scope,sub_scope, depth);
-            printIf(c->state);
-
             break;
         case WHILE:
             compileWhile(vm,c->state,class_scope,sub_scope, depth);
             break;
         case DO:
             compileDo(vm,c->state,class_scope,sub_scope, *depth);
-            printDo(c->state);
             break;
         case RETURN:
-            printReturn(c->state);
             compileReturn(vm,c->state,class_scope,sub_scope, *depth);
-            printf("done return\n");
             break;
     }
 
@@ -207,13 +198,12 @@ void compileLet(char * vm, struct letStatement * state, struct tableVar ** class
     int loc;
     struct tableVar * tvar;
 
-    loc = find_hash(sub_scope, state->varName, 1, 0);
+    loc = find_hash(sub_scope, state->varName, 1);
     if (loc < 0) {
-        loc = find_hash(class_scope, state->varName, 1, 0);
+        loc = find_hash(class_scope, state->varName, 1);
 
         if (loc < 0) {
 
-            printf("ERROR LET\n");
             return;
         }
 
@@ -240,7 +230,6 @@ void compileLet(char * vm, struct letStatement * state, struct tableVar ** class
 void compileIf(char * vm, struct ifStatement * state, struct tableVar ** class_scope, struct tableVar ** sub_scope, int * depth) {
     char * a = itoa(*depth);
     compileExpression(vm,state->cond,class_scope,sub_scope,0);
-    printf("IF\n");
     strcat(vm,"if-goto IF_OK");
     strcat(vm,a);
     strcat(vm,"\n");
@@ -260,9 +249,11 @@ void compileIf(char * vm, struct ifStatement * state, struct tableVar ** class_s
         temp = temp->next;
     }
 
-    strcat(vm,"goto END_IF");
-    strcat(vm,a);
-    strcat(vm,"\n");
+    if (state->elseHead != NULL) {
+        strcat(vm,"goto END_IF");
+        strcat(vm,a);
+        strcat(vm,"\n");
+    }
 
     strcat(vm,"label IF_BAD");
     strcat(vm,a);
@@ -274,12 +265,13 @@ void compileIf(char * vm, struct ifStatement * state, struct tableVar ** class_s
             compileCommand(vm,temp,class_scope,sub_scope,depth);
             temp = temp->next;
         }
+
+        strcat(vm,"label END_IF");
+        strcat(vm,a);
+        strcat(vm,"\n");
+
     }
 
-    printf("ENDIF\n");
-    strcat(vm,"label END_IF");
-    strcat(vm,a);
-    strcat(vm,"\n");
 
 }
 
@@ -315,7 +307,6 @@ void compileWhile(char * vm, struct whileStatement * state, struct tableVar ** c
 void compileDo(char * vm, struct doStatement * state, struct tableVar ** class_scope, struct tableVar ** sub_scope, int depth) {
     state->sub->unaryOp = 'D';
     compileTerm(vm,state->sub,class_scope,sub_scope,0);
-    printf("DOOO\n");
 
     compilePushPop(vm,TEMP,0,1);
 }
@@ -331,7 +322,6 @@ void compileReturn(char * vm, struct returnStatement * state, struct tableVar **
 void compileExpression(char * vm, struct expression * exp, struct tableVar ** class_scope, struct tableVar ** sub_scope, int isPop) {
 
     compileTerm(vm, exp->t,class_scope,sub_scope,0);
-    printf("doneterm\n");
     if (exp->op != NULL)
         compileOpTerm(vm,exp->op,class_scope,sub_scope,0);
 
@@ -351,10 +341,10 @@ void compileOpTerm(char * vm, struct opterm * op, struct tableVar ** class_scope
 void compileTerm(char * vm, struct term * t, struct tableVar ** class_scope, struct tableVar ** sub_scope,int isPop) {
 
     int i = 0;
-
+    int j;
+    char * n;
     struct tableVar * tvar;// = (struct tableVar *) malloc(sizeof(struct tableVar));
     if (t->value != NULL) {
-        printf("TERRRRM\t%s\n",t->value);
     }
     switch(t->type) {
         case INT:
@@ -364,15 +354,44 @@ void compileTerm(char * vm, struct term * t, struct tableVar ** class_scope, str
             compileString(vm,t->value);
             break;
         case SUB:
+            //j = i;
+            n = strip_extension(t->value); 
+
+            i = find_hash(sub_scope, n, 1);
+
+            if (strcmp(n,t->value) == 0) {
+
+                i = find_hash(class_scope, n, 1);
+
+                tvar = class_scope[i];
+                if (strcmp(tvar->dtype,"method") == 0) {
+                    compilePushPop(vm,POINTER,0,0);
+                    //j++;
+                }
+                //compileCall(vm,(class_scope[0])->name,t->value,j);
+                //break;
+            } else if (i < 0) {
+
+                i = find_hash(class_scope, n, 1);
+
+                if (i >= 0) {
+                    tvar = class_scope[i];
+                    compilePushPop(vm,tvar->type,tvar->index,0);
+                }
+
+            } else {
+
+                tvar = sub_scope[i];
+                compilePushPop(vm,tvar->type,tvar->index,0);
+
+            }
         case EXP:
-            printf("MERRRRRRRR\n");
+            i = 0;
             if (t->exValue != NULL) {
                 i++;
                 struct expression * temp = (t->exValue);
-                printf("flerr\n");
 
                 compileExpression(vm,temp,class_scope,sub_scope,isPop);
-                printf("flerr\n");
                 temp = temp->next;
                 while (temp != NULL) {
                     compileExpression(vm,temp,class_scope,sub_scope,isPop);
@@ -381,28 +400,26 @@ void compileTerm(char * vm, struct term * t, struct tableVar ** class_scope, str
                 }
             }
             if (t->type == SUB) {
-                printf("SUBBBBBB\n");
-                int j = i;
-                char * n = strip_extension(t->value); 
+                j = i;
+                n = strip_extension(t->value); 
 
-                printf("%s\n",n);
 
                 if (strcmp(n,t->value) == 0) {
 
-                    i = find_hash(class_scope,n,1,0);
+                    i = find_hash(class_scope,n,1);
                     tvar = class_scope[i];
                     if (strcmp(tvar->dtype,"method") == 0) {
-                        compilePushPop(vm,POINTER,0,0);
+                        //compilePushPop(vm,POINTER,0,0);
                         j++;
                     }
                     compileCall(vm,(class_scope[0])->name,t->value,j);
                     break;
                 }
 
-                i = find_hash(sub_scope, n, 1, 0);
+                i = find_hash(sub_scope, n, 1);
                 if (i < 0) {
 
-                    i = find_hash(class_scope, n, 1, 0);
+                    i = find_hash(class_scope, n, 1);
 
                     if (i < 0) {
 
@@ -420,28 +437,26 @@ void compileTerm(char * vm, struct term * t, struct tableVar ** class_scope, str
 
                 }
 
-                char * name = (char *) malloc(strlen(tvar->dtype) + strlen(get_filename_ext(t->value) + 2));
+                char * name = (char *) malloc(strlen(tvar->dtype) + strlen(get_filename_ext(t->value)) + 2);
                 strcpy(name,tvar->dtype);
                 strcat(name,".");
                 strcat(name,get_filename_ext(t->value));
                
-                compilePushPop(vm,tvar->type,tvar->index,0);
+                //compilePushPop(vm,tvar->type,tvar->index,0);
                 compileCall(vm,(class_scope[0])->name,name,j+1);
+                free(name);
             }
             break;
         case VAR:
             if (isKeywordConstant(t->value)) {
-                printf("mekeyword?\n");
                 compileKeyword(vm,t->value);
                 break;
             }
-            i = find_hash(sub_scope, t->value, 1, 0);
+            i = find_hash(sub_scope, t->value, 1);
             if (i < 0) {
-                i = find_hash(class_scope, t->value, 1, 0);
+                i = find_hash(class_scope, t->value, 1);
 
                 if (i < 0) {
-                    printf("ERROR TERM %i\t%s\n",hash(t->value,1),t->value);
-                    printf("%s\n",(class_scope[0])->name);
                     break;
                 }
 
@@ -462,7 +477,6 @@ void compileTerm(char * vm, struct term * t, struct tableVar ** class_scope, str
             compilePushPop(vm,tvar->type,tvar->index,isPop);
             break;
         default:
-            printf("WHAT DA HELLLLL\n");
             break;
     }
 
@@ -518,11 +532,9 @@ void compileConstant(char * vm, int i) {
     if (i < 0) {
         compilePushPop(vm, CONSTANT, -i, 0);
         compileOp(vm,'-',1);
-        printf("constant\n");
         return;
     }
     compilePushPop(vm, CONSTANT, i, 0);
-    printf("constant\n");
 }
 
 void compileString(char * vm, char * str) {
@@ -571,5 +583,4 @@ void compileKeyword(char * vm, char * keyword) {
     else {
         compilePushPop(vm,POINTER,0,0);
     }
-    printf("keyword\n");
 }
